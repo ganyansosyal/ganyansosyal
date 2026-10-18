@@ -1288,7 +1288,7 @@ async function atSonYaris(atId) {
 async function kosuIlk4(sehirAdi, tarih, kosuNo) {
   const m = /^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/.exec(tarih || ''); if (!m || !kosuNo) return null;
   const iso = m[3] + '-' + String(m[2]).padStart(2, '0') + '-' + String(m[1]).padStart(2, '0');
-  const ck = 'gs_ilk4_v1', key = turkceNormalizeAnahtar(sehirAdi) + '|' + iso + '|' + kosuNo;
+  const ck = 'gs_ilk4_v2', key = turkceNormalizeAnahtar(sehirAdi) + '|' + iso + '|' + kosuNo;
   let depo = {}; try { depo = JSON.parse(localStorage.getItem(ck) || '{}') || {}; } catch (e) {}
   if (depo[key] && Date.now() - depo[key].ts < 30 * 86400000) return depo[key].v;
   const ls = await sehirleriGetir(iso);
@@ -1318,8 +1318,17 @@ async function kosuIlk4(sehirAdi, tarih, kosuNo) {
     trs.slice(bi + 1).forEach(tr => {
       const td = tr.querySelectorAll('td'); if (td.length <= Math.max(iS, iIsim)) return;
       const sr = parseInt(td[iS].textContent.trim()); if (!sr || sr > 4) return;
-      const ham = norm(td[iIsim].textContent);
-      const mN = ham.match(/\(\s*(\d{1,2})\s*\)/);
+      // İsim hücresinde takı kısaltmaları ve gizli açıklama metinleri ("DBDilinin bağlanacağını…") de var: önce bağlantı metnini, yoksa iç öğeleri atarak al
+      const hucre = td[iIsim];
+      const hamTam = norm(hucre.textContent);
+      const mN = hamTam.match(/\(\s*(\d{1,2})\s*\)/);
+      let ham = hucre.querySelector('a') ? norm(hucre.querySelector('a').textContent) : '';
+      if (!ham) { const kl = hucre.cloneNode(true); kl.querySelectorAll('span,sup,sub,small,div,i,em,b,img,script,style').forEach(x => x.remove()); ham = norm(kl.textContent); }
+      if (!ham) ham = hamTam;
+      let kesildi = false;
+      ham = ham.replace(/(Dilinin|Kulakl[ıi]k|Kapal[ıi]|G[öo]zl[üu]k|Burun|tak[ıi]lacağ[ıi]n[ıi]|bağlanacağ[ıi]n[ıi]|ifade\s+eder).*$/i, () => { kesildi = true; return ''; });
+      ham = ham.replace(/\s+/g, ' ').trim();
+      if (kesildi) { const TK = /\s+(?:K|KG|KK|DB|SK|SKG|SGK|GKR|KGKR|SGKR|SKGK|SKGKR|DBK|KKG)\s*$/; while (TK.test(ham)) ham = ham.replace(TK, ''); }
       const ad = ham.replace(/\(\s*\d{1,2}\s*\)/g, ' ').replace(/\s*\([A-Z]{2,4}\)\s*$/, '').replace(/\s+/g, ' ').trim();
       const cellNo = x => x >= 0 && td[x] ? parseInt(td[x].textContent) || 0 : 0;
       const g = iGny >= 0 && td[iGny] ? norm(td[iGny].textContent) : '';
