@@ -3104,3 +3104,15 @@ body.lv-pfs-on{overflow:hidden}
 .ld-bar i{display:block;height:100%;width:6%;border-radius:99px;background:var(--ac);transition:width 9s cubic-bezier(.1,.7,.2,1)}
 .ld-bar.go i{width:92%}
 .ld-s{margin-top:10px;text-align:center;font-size:12.5px;font-weight:600;color:var(--mu)}
+
+/* ===== İdman videosu satırı ===== */
+.idm-row{display:flex;align-items:center;gap:12px;margin:8px 0;padding:11px 14px;border-radius:14px;cursor:pointer;background:color-mix(in srgb,#e5484d 11%,var(--sf));color:#d23a3f}
+.idm-pl{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#e5484d;color:#fff;font-size:13px;padding-left:2px}
+.idm-tx{flex:1;display:flex;flex-direction:column;line-height:1.25}
+.idm-tx b{font-size:14px;font-weight:800}
+.idm-tx small{font-size:11px;font-weight:600;opacity:.75}
+.idm-ok{font-size:22px;font-weight:700;opacity:.6}
+.idm-modal{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.85);display:grid;place-items:center;padding:12px}
+.idm-box{position:relative;width:100%;max-width:720px}
+.idm-box video{width:100%;border-radius:14px;background:#000;display:block}
+.idm-x{position:absolute;right:6px;top:-44px;width:38px;height:38px;border:0;border-radius:50%;background:#fff;font-size:16px;font-weight:800}
