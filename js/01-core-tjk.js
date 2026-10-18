@@ -1896,7 +1896,7 @@ function showToast(m){
     host.querySelectorAll('.empty').forEach(el => {
       if(/yükleniyor/i.test(el.textContent) && !el.querySelector('.ld-card')){
         el.style.padding = '0';
-        el.innerHTML = '<div class="ld-card"><div class="ld-ico">🏇</div><div class="ld-t">Bülten hazırlanıyor</div><div class="ld-s">TJK programı getiriliyor…</div><div class="ld-bar"><i></i></div></div>';
+        el.innerHTML = '<div class="ld-card"><div class="ld-bar"><i></i></div><div class="ld-s">Yükleniyor</div></div>';
         const bar = el.querySelector('.ld-bar');
         requestAnimationFrame(() => requestAnimationFrame(() => bar.classList.add('go')));
       }
