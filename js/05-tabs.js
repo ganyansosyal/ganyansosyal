@@ -35,7 +35,7 @@ function sonucOzet(c){
     for(let i = 0; i < cd.n; i++){
       const r = cd.st + i, res = raceRes(c, r), no = res && res[0], h = no && horsesFor(c, r).find(x => x.no === no);
       rows += `<div class="so-r"><span class="lg">${i + 1}</span>` + (h
-        ? `${sc(h.no)}<div class="hn"><b>${esc(h.name)}</b>${h.agf ? `<small>%${h.agf}</small>` : ''}</div>${gnyOf(c, r, no) ? gnyPill(gnyOf(c, r, no)) : ''}`
+        ? `${sc(h.no)}<div class="hn"><b>${esc(h.name)}</b>${h.agf ? `<small>%${h.agf}</small>` : ''}</div>${vidBtn(c, r).replace('class="rp-vid"', 'class="so-vid"').replace('▶ Koşu videosunu izle', 'İzle')}${gnyOf(c, r, no) ? gnyPill(gnyOf(c, r, no)) : ''}`
         : `<div class="hn"><b class="mu">${r}. koşu</b><small>${raceDone(c, r) ? 'Sonuç alınıyor…' : 'Henüz koşulmadı'}</small></div>`) + '</div>';
     }
     const hepsiBitti = Array.from({length: cd.n}, (_, i) => !!raceRes(c, cd.st + i)).every(Boolean);

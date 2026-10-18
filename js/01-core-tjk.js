@@ -1607,6 +1607,7 @@ function softRefresh(){
     const y = window.scrollY;
     softRefresh.p = false;
     rerender();
+    try{ if(visible() === 'sonuc') renderSonuc(); }catch(e){}   // Sonuçlar açıkken sonuç/video bağlantısı gelince İzle düğmesi hemen güncellensin
     if(Math.abs(window.scrollY - y) > 1) window.scrollTo({top: y, behavior: 'instant'});
   };
   idleRun(() => requestAnimationFrame(run));
