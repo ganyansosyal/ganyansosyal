@@ -569,12 +569,15 @@ function parseAtTablosu(tablo) {
     if (idxIdm >= 0 && hucreler[idxIdm]) {
       const hc = hucreler[idxIdm];
       const parcalar = [];
-      hc.querySelectorAll('*').forEach(e => Array.from(e.attributes || []).forEach(at => parcalar.push(at.value)));
-      Array.from(hc.attributes || []).forEach(at => parcalar.push(at.value));
+      const atla = (e, ad) => /^(class|style|alt|width|height|id)$/i.test(ad) || (e.tagName === 'IMG' && /^(src|srcset)$/i.test(ad));
+      hc.querySelectorAll('*').forEach(e => Array.from(e.attributes || []).forEach(at => { if (!atla(e, at.name)) parcalar.push(at.value); }));
+      Array.from(hc.attributes || []).forEach(at => { if (!atla(hc, at.name)) parcalar.push(at.value); });
       const tumu = parcalar.join(' ');
       const m = /(https?:)?\/\/[^\s'"()<>]+\.(?:mp4|webm|m3u8)[^\s'"()<>]*/i.exec(tumu) || /(https?:)?\/\/[^\s'"()<>]*(?:idman|video|youtu)[^\s'"()<>]*/i.exec(tumu) || /\/[^\s'"()<>]*(?:idman|video)[^\s'"()<>]*/i.exec(tumu);
       const ln = hc.querySelector('a[href]');
       let h = m ? m[0] : (ln && !/^javascript|^#/i.test(ln.getAttribute('href') || '') ? ln.getAttribute('href') : '');
+      if (/\.(png|jpe?g|gif|svg|webp|ico)(\?|$)/i.test(h)) h = '';
+      (window.__idmRaw = window.__idmRaw || {})[String(isim).toLocaleUpperCase('tr').trim()] = hc.innerHTML.replace(/\s+/g, ' ').trim().slice(0, 900);
       try { if (h) idmUrl = new URL(h, 'https://www.tjk.org/').href; } catch (e) {}
       if (idmUrl && isim) { (window.__idm = window.__idm || {})[String(isim).toLocaleUpperCase('tr').trim()] = idmUrl; }
     }
@@ -1961,7 +1964,7 @@ function showToast(m){
       if(yapildi.has(kart)) return; yapildi.add(kart);
       const d = document.createElement('div');
       d.className = 'idm-row'; d.setAttribute('data-src', harita[ad]);
-      d.innerHTML = '<span class="idm-pl">▶</span><span class="idm-tx"><b>İdman videosu</b><small>TJK · atın idman görüntüsü</small></span><span class="idm-ok">›</span>';
+      d.innerHTML = '<span class="idm-pl">▶</span><span class="idm-tx"><b>İdman videosunu izle</b></span><span class="idm-ok">VİDEO</span>';
       kap.insertBefore(d, kutu);
     });
   }
@@ -1974,6 +1977,13 @@ function showToast(m){
       m.innerHTML = '<div class="idm-box"><button class="idm-x" aria-label="Kapat">✕</button><video controls autoplay playsinline src="' + u.replace(/"/g, '&quot;') + '"></video></div>';
       m.addEventListener('click', ev => { if(ev.target === m || ev.target.classList.contains('idm-x')){ const v = m.querySelector('video'); if(v) v.pause(); m.remove(); } });
       document.body.appendChild(m);
-    } else { window.open(u, '_blank', 'noopener'); }
+    } else {
+      const ad = Object.keys(window.__idm || {}).find(k => window.__idm[k] === u);
+      const ham = ((window.__idmRaw || {})[ad] || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      const m = document.createElement('div'); m.className = 'idm-modal';
+      m.innerHTML = '<div class="idm-box idm-dbg"><button class="idm-x">✕</button><b>Bulunan bağlantı:</b><br>' + u.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '<br><br><a class="idm-go" href="' + u.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener">Bağlantıyı aç</a><br><br><b>TJK hücresi (HTML):</b><br>' + ham + '</div>';
+      m.addEventListener('click', ev => { if(ev.target === m || ev.target.classList.contains('idm-x')) m.remove(); });
+      document.body.appendChild(m);
+    }
   });
 })();
