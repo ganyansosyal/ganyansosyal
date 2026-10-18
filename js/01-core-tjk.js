@@ -1298,8 +1298,11 @@ async function kosuIlk4(sehirAdi, tarih, kosuNo) {
   if (!sh) return null;
   const era = eraHesapla(iso);
   const url = `https://www.tjk.org/TR/yarissever/Info/Sehir/GunlukYarisSonuclari?SehirId=${sh.id}&QueryParameter_Tarih=${encodeURIComponent(isoyuTjkTarihineCevir(iso))}&SehirAdi=${encodeURIComponent(sh.adi)}&Era=${era}`;
-  const html = await (_ilk4Html[url] || (_ilk4Html[url] = fetchWithTimeout(url, 30000, 1).then(r => r.text()).catch(e => { delete _ilk4Html[url]; throw e; })));
-  const dom = new DOMParser().parseFromString(html, 'text/html');
+  // Sayfa bir kez indirilir VE bir kez ayrıştırılır (her at için yeniden ayrıştırmak telefonu kasıyordu); ayrıştırma ekran boştayken yapılır
+  const dom = await (_ilk4Html[url] || (_ilk4Html[url] = fetchWithTimeout(url, 30000, 1).then(r => r.text()).then(async html => {
+    await new Promise(r => (window.requestIdleCallback ? requestIdleCallback(() => r(), { timeout: 2000 }) : setTimeout(r, 30)));
+    return new DOMParser().parseFromString(html, 'text/html');
+  }).catch(e => { delete _ilk4Html[url]; throw e; })));
   const basliklar = Array.from(dom.body.querySelectorAll('*')).filter(el => el.children.length <= 2 && /^\d+\.\s*Koşu/.test((el.textContent || '').trim()) && (el.textContent || '').trim().length < 400);
   const norm = s => String(s || '').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
   for (const tablo of dom.querySelectorAll('table')) {

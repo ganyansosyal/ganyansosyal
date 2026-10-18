@@ -266,16 +266,24 @@ Object.keys(GL).forEach(k => {
   try{ o.c = JSON.parse(localStorage.getItem(o.key) || '{}') || {}; }catch(e){ o.c = {}; }
 });
 const galipGet = (k, id) => { const g = GL[k].c[id]; return g && Date.now() - g.ts < GALIP_TTL ? g : null; };
-// Son yarış kartının at numarası: kart hemen çizilir, numara arkadan (koşu sonuç sayfasından) bulunup rozete eklenir
-const _yarNb = new Set();
+// Son yarış kartının at numarası: kart hemen çizilir, numara arkadan (koşu sonuç sayfasından) bulunup rozete eklenir.
+// Tek tek (sırayla) çalışır, kaydırırken ve sekme arka plandayken bekler; ekran akıcı kalsın
+const _yarNb = new Set(), _yarQ = []; let _yarRun = false;
 function yarNoBul(id){
   const g = GL.yar.c[id]; if(!g || g.n || g.no || !g.st || !g.sh || !g.kn || !g.t || _yarNb.has(id)) return;
-  _yarNb.add(id);
+  _yarNb.add(id); _yarQ.push(id); yarNoPompa();
+}
+function yarNoPompa(){
+  if(_yarRun || !_yarQ.length || document.hidden) return;
+  if(typeof _lastTouch === 'number' && Date.now() - _lastTouch < 800){ setTimeout(yarNoPompa, 900); return; }
+  const id = _yarQ.shift(), g = GL.yar.c[id]; if(!g){ yarNoPompa(); return; }
+  _yarRun = true;
   TJK.kosuIlk4(g.sh, g.t, g.kn).then(l => {
     const x = l && l.find(r => r.st && r.st === +g.st);
     if(x && x.no){ g.no = String(x.no); galipSave('yar'); galipRefresh('yar', id); }
-  }).catch(() => {});
+  }).catch(() => {}).finally(() => { _yarRun = false; setTimeout(yarNoPompa, 400); });
 }
+document.addEventListener('visibilitychange', () => { if(!document.hidden) yarNoPompa(); });
 function galipSave(k){ try{ localStorage.setItem(GL[k].key, JSON.stringify(GL[k].c)); }catch(e){} }
 function galipGun(t){
   const m = /^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/.exec(t || ''); if(!m) return '';
