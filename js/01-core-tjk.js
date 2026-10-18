@@ -498,6 +498,7 @@ function parseAtTablosu(tablo) {
   const idxEnIyi = sutun('En İyi D');
   const idxGny = sutun('Gny');
   const idxAgf = sutun('AGF');
+  const idxIdm = sutun(['İdm','Idm']);
   const idxAntrenor = (()=>{for(const ad of ['Antrenör','Antrenor','Antr.']){const i=sutun(ad);if(i>=0)return i;}return -1;})();
   // Bugünkü koşuda takı/ekstra donanım (gözlük, yular vb.) sütunu — TJK sayfa sürümüne göre
   // bulunmayabilir. Sütun hiç yoksa (idxTaki=-1) "takısız" ile "veri yok" birbirine karışmasın diye
@@ -563,7 +564,23 @@ function parseAtTablosu(tablo) {
     const sikHam = al(idxSiklet) || '', sikFazla = (sikHam.match(/\+\s*(\d+(?:[.,]\d+)?)/) || [])[1] || null;
     const tek = idx => { const v = al(idx); return v ? v.replace(/\s+/g, ' ').trim() : null; };
 
+    // ---- İDMAN VİDEOSU (TJK program tablosundaki kırmızı ▶ düğmesi) ----
+    let idmUrl = null;
+    if (idxIdm >= 0 && hucreler[idxIdm]) {
+      const hc = hucreler[idxIdm];
+      const parcalar = [];
+      hc.querySelectorAll('*').forEach(e => Array.from(e.attributes || []).forEach(at => parcalar.push(at.value)));
+      Array.from(hc.attributes || []).forEach(at => parcalar.push(at.value));
+      const tumu = parcalar.join(' ');
+      const m = /(https?:)?\/\/[^\s'"()<>]+\.(?:mp4|webm|m3u8)[^\s'"()<>]*/i.exec(tumu) || /(https?:)?\/\/[^\s'"()<>]*(?:idman|video|youtu)[^\s'"()<>]*/i.exec(tumu) || /\/[^\s'"()<>]*(?:idman|video)[^\s'"()<>]*/i.exec(tumu);
+      const ln = hc.querySelector('a[href]');
+      let h = m ? m[0] : (ln && !/^javascript|^#/i.test(ln.getAttribute('href') || '') ? ln.getAttribute('href') : '');
+      try { if (h) idmUrl = new URL(h, 'https://www.tjk.org/').href; } catch (e) {}
+      if (idmUrl && isim) { (window.__idm = window.__idm || {})[String(isim).toLocaleUpperCase('tr').trim()] = idmUrl; }
+    }
+
     atlar.push({
+      idm: idmUrl,
       kosmaz,
       no: al(idxN),
       isim: isim || isimHam.substring(0,40),
@@ -1171,13 +1188,18 @@ async function atSonGalibiyet(atId) {
     const iH = heads.findIndex(h => /hip|şehir|sehir/.test(h));
     const iM = heads.findIndex(h => /msf|mesafe/.test(h));
     const iP = heads.findIndex((h, i) => i !== iM && /pist|zemin/.test(h));
+    const iJk = heads.findIndex(h => /jokey/.test(h));
+    const iC = heads.findIndex(h => /cins|grup|grub/.test(h));
+    const iG = heads.findIndex(h => /^gny|ganyan/.test(h));
     if (iT < 0 || iS < 0) continue;
     for (let i = hi + 1; i < rows.length; i++) {
       const td = rows[i].querySelectorAll('td'); if (td.length <= iS) continue;
       if (!/^1\b/.test(norm(td[iS].textContent))) continue;
       const g = idx => idx >= 0 && td[idx] ? norm(td[idx].textContent) : '';
       const pist = (g(iP) || (iM >= 0 && td[iM] ? (td[iM].querySelector('[title],img[alt]') || {}).title || '' : '')).replace(/^K$/i, 'Kum').replace(/^[ÇC]$/i, 'Çim').replace(/^S$/i, 'Sentetik');
-      return { t: g(iT), d: g(iD), y: [g(iH), g(iM), pist].filter(Boolean).join(' · ') };
+      const gny = g(iG).replace(/[^\d.,]/g, '');
+      const sonuc = { t: g(iT), d: g(iD), y: [g(iH), g(iM), pist].filter(Boolean).join(' · '), k: [g(iC), g(iJk), gny ? 'Gny ' + gny : ''].filter(Boolean).join(' · ') };
+      return sonuc;
     }
     return { n: 1 };
   }
@@ -1905,4 +1927,53 @@ function showToast(m){
   }
   new MutationObserver(paint).observe(host, { childList:true, subtree:true });
   paint();
+})();
+
+/* ===== İdman videosu satırı: "Detay" içinde, istatistik tablosunun altına ===== */
+(function(){
+  const ANK = [/^En iyi derece/i, /^Son galibiyet/i, /^Son galop/i];
+  function ekle(){
+    const harita = window.__idm; if(!harita) return;
+    const adlar = Object.keys(harita).sort((a, b) => b.length - a.length);
+    if(!adlar.length) return;
+    const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const adaylar = []; let n;
+    while((n = w.nextNode())){
+      const t = (n.nodeValue || '').trim();
+      if(t.length < 40 && ANK.some(r => r.test(t)) && n.parentElement) adaylar.push(n.parentElement);
+    }
+    const yapildi = new Set();
+    adaylar.forEach(el => {
+      // kutuları taşıyan kapsayıcıyı bul (içinde "Orijin, sahip" satırı da olan ilk üst), kutu = kapsayıcının bu öğeyi içeren çocuğu
+      let kap = el.parentElement, kutu = el, g = 0;
+      while(kap && g < 8 && !/Orijin/i.test(kap.textContent || '')){ kutu = kap; kap = kap.parentElement; g++; }
+      if(!kap) return;
+      // at kartını bul (içinde at ismi geçen en yakın üst)
+      let kart = kap, ad = null, s = 0;
+      while(kart && s < 8){
+        const tx = (kart.textContent || '').toLocaleUpperCase('tr');
+        ad = adlar.find(x => tx.includes(x));
+        if(ad) break;
+        kart = kart.parentElement; s++;
+      }
+      if(!ad) return;
+      if(kart.querySelector('.idm-row')) return;
+      if(yapildi.has(kart)) return; yapildi.add(kart);
+      const d = document.createElement('div');
+      d.className = 'idm-row'; d.setAttribute('data-src', harita[ad]);
+      d.innerHTML = '<span class="idm-pl">▶</span><span class="idm-tx"><b>İdman videosu</b><small>TJK · atın idman görüntüsü</small></span><span class="idm-ok">›</span>';
+      kap.insertBefore(d, kutu);
+    });
+  }
+  new MutationObserver(() => { clearTimeout(ekle.h); ekle.h = setTimeout(ekle, 200); }).observe(document.body, { childList:true, subtree:true });
+  document.addEventListener('click', e => {
+    const r = e.target.closest && e.target.closest('.idm-row'); if(!r) return;
+    const u = r.getAttribute('data-src'); if(!u) return;
+    if(/\.(mp4|webm)(\?|$)/i.test(u)){
+      const m = document.createElement('div'); m.className = 'idm-modal';
+      m.innerHTML = '<div class="idm-box"><button class="idm-x" aria-label="Kapat">✕</button><video controls autoplay playsinline src="' + u.replace(/"/g, '&quot;') + '"></video></div>';
+      m.addEventListener('click', ev => { if(ev.target === m || ev.target.classList.contains('idm-x')){ const v = m.querySelector('video'); if(v) v.pause(); m.remove(); } });
+      document.body.appendChild(m);
+    } else { window.open(u, '_blank', 'noopener'); }
+  });
 })();
