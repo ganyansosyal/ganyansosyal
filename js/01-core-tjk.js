@@ -1430,7 +1430,7 @@ async function liveOpen(){
   window.liveShow = () => { st.classList.remove('lv-hide'); clearTimeout(window._lvHT); window._lvHT = setTimeout(() => { if(!v.paused && !window._lvDrag) st.classList.add('lv-hide'); }, 3200); };
   st.addEventListener('pointerdown', e => { if(e.target === st || e.target === v){ if(st.classList.contains('lv-hide')) liveShow(); else st.classList.add('lv-hide'); } else liveShow(); });
   // --- ilerleme çubuğu: yayının geri alınabilir aralığında gezinir ---
-  sk.addEventListener('input', () => { window._lvDrag = true; const r = liveRange(); if(r){ const t = r[0] + (r[1] - r[0]) * sk.value / 1000; $('lv-tm').textContent = (r[1] - t) > 5 ? '-' + lvFmt(r[1] - t) : 'CANLI'; } });
+  sk.addEventListener('input', () => { window._lvDrag = true; lvPaint(sk); const r = liveRange(); if(r){ const t = r[0] + (r[1] - r[0]) * sk.value / 1000; $('lv-tm').textContent = (r[1] - t) > 5 ? '-' + lvFmt(r[1] - t) : 'CANLI'; } });
   sk.addEventListener('change', () => { const r = liveRange(); if(r){ try{ v.currentTime = r[0] + (r[1] - r[0]) * sk.value / 1000; v.play().catch(() => {}); }catch(e){} } window._lvDrag = false; liveShow(); });
   v.addEventListener('play', liveUi); v.addEventListener('pause', () => { liveUi(); st.classList.remove('lv-hide'); });
   v.addEventListener('waiting', () => st.classList.add('lv-wait')); v.addEventListener('stalled', () => st.classList.add('lv-wait'));
@@ -1454,7 +1454,9 @@ async function liveOpen(){
         liveSyncDurationCount: 4,         // canlı kenardan 4 parça geride başla: takılma azalır
         liveMaxLatencyDurationCount: 12,
         manifestLoadingMaxRetry: 6, levelLoadingMaxRetry: 6, fragLoadingMaxRetry: 6,
-        nudgeMaxRetry: 8
+        nudgeMaxRetry: 8,
+        capLevelToPlayerSize: true,       // ekran boyutundan yüksek kaliteyi çekme: gereksiz yük ve takılma olmaz
+        abrBandWidthFactor: 0.8, abrBandWidthUpFactor: 0.6   // internet yavaşlarsa kaliteyi hızlı düşür, yükselirken temkinli ol
       });
       window._hls = h;
       h.on(Hls.Events.ERROR, (ev, d) => {
@@ -1471,12 +1473,14 @@ async function liveOpen(){
 }
 // Geri alınabilir aralık: [başlangıç, canlı kenar]
 function liveRange(){ const v = vidV(); if(!v) return null; const sk = v.seekable; if(!sk || !sk.length) return null; const a = sk.start(0), b = sk.end(sk.length - 1); return b > a ? [a, b] : null; }
+const lvPaint = sk => { sk.style.setProperty('--p', (sk.value / 10) + '%'); };
 function liveUi(){
   const v = vidV(); if(!v) return;
   const pp = $('lv-pp'), big = $('lv-big'), mu = $('lv-mu');
   const ic = v.paused ? LV_I.play : LV_I.pause;
-  if(pp) pp.innerHTML = ic; if(big) big.innerHTML = ic;
-  if(mu) mu.innerHTML = (v.muted || v.volume === 0) ? LV_I.mute : LV_I.vol;
+  const mi = (v.muted || v.volume === 0) ? LV_I.mute : LV_I.vol;
+  if(pp && pp._i !== ic){ pp.innerHTML = ic; pp._i = ic; } if(big && big._i !== ic){ big.innerHTML = ic; big._i = ic; }
+  if(mu && mu._i !== mi){ mu.innerHTML = mi; mu._i = mi; }
   const st = $('lv-stage'); if(st) st.classList.toggle('lv-paused', v.paused);
 }
 function liveTick(){
@@ -1487,7 +1491,7 @@ function liveTick(){
   else { c.classList.remove('late'); t.textContent = 'CANLI'; }
   const tm = $('lv-tm'), sk = $('lv-seek');
   if(!window._lvDrag){
-    if(sk) sk.value = Math.round(1000 * (v.currentTime - r[0]) / (r[1] - r[0]));
+    if(sk){ sk.value = Math.round(1000 * (v.currentTime - r[0]) / (r[1] - r[0])); lvPaint(sk); }
     if(tm) tm.textContent = lag > 5 ? '-' + lvFmt(lag) : 'CANLI';
     if(tm) tm.classList.toggle('late', lag > 5);
   }
@@ -1500,21 +1504,15 @@ function liveEdge(){ const v = vidV(); if(!v) return; try{ const r = liveRange()
 function liveToggle(){ const v = vidV(); if(!v) return; if(v.paused) v.play().catch(() => {}); else v.pause(); if(window.liveShow) liveShow(); }
 function liveSeek(dt){ const v = vidV(); if(!v) return; const r = liveRange(); if(!r) return; v.currentTime = Math.max(r[0], Math.min(r[1] - 0.5, v.currentTime + dt)); if(window.liveShow) liveShow(); }
 function liveMute(){ const v = vidV(); if(!v) return; v.muted = !v.muted; if(!v.muted && v.volume === 0) v.volume = 1; liveUi(); }
-// Tam ekran: videonun kendisi değil sahne (video + kendi kontrollerimiz) tam ekran olur, böylece "Kapat" düğmesi görünür
-function liveFsOn(){ const st = $('lv-stage'); return !!(document.fullscreenElement || document.webkitFullscreenElement || (st && st.classList.contains('lv-pfs'))); }
+// Tam ekran: tarayıcının tam ekran API'si ve ekran yönü kilidi KULLANILMAZ (ikisi de geçişte zıplama / yeniden çizim yapıyor).
+// Sahne (video + kendi kontrollerimiz) aynı anda, yalnızca CSS ile ekranı kaplar; girişte ve çıkışta birebir aynı davranır.
+// Telefon dikeyken sahne CSS ile 90° döndürülüp yatay doldurulur, telefon yatay olunca döndürme kendiliğinden kalkar.
+function liveFsOn(){ const st = $('lv-stage'); return !!(st && st.classList.contains('lv-pfs')); }
 function liveFull(on){
   const st = $('lv-stage'); if(!st) return;
   if(on === undefined) on = !liveFsOn();
-  if(on){
-    const pseudo = () => { st.classList.add('lv-pfs', 'lv-fs'); document.body.classList.add('lv-pfs-on'); try{ screen.orientation.lock('landscape').catch(() => {}); }catch(e){} };
-    const f = st.requestFullscreen || st.webkitRequestFullscreen;
-    if(f){ try{ const p = f.call(st); if(p && p.then) p.then(() => { try{ screen.orientation.lock('landscape').catch(() => {}); }catch(e){} }).catch(pseudo); }catch(e){ pseudo(); } }
-    else pseudo();
-  } else {
-    st.classList.remove('lv-pfs', 'lv-fs'); document.body.classList.remove('lv-pfs-on');
-    try{ if(document.fullscreenElement) document.exitFullscreen(); else if(document.webkitFullscreenElement) document.webkitExitFullscreen(); }catch(e){}
-    try{ screen.orientation.unlock(); }catch(e){}
-  }
+  st.classList.toggle('lv-pfs', on); st.classList.toggle('lv-fs', on);
+  document.body.classList.toggle('lv-pfs-on', on);
   if(window.liveShow) liveShow();
 }
 const vidV = () => { const o = $('vm'); return o ? o.querySelector('video') : null; };
@@ -1525,7 +1523,7 @@ function vidFull(){
   const f = v.requestFullscreen || v.webkitRequestFullscreen || v.webkitEnterFullscreen; if(!f) return;
   try{ const p = f.call(v); if(p && p.then) p.then(() => { try{ screen.orientation.lock('landscape').catch(() => {}); }catch(e){} }).catch(() => {}); }catch(e){}
 }
-const _fsChg = () => { const st = $('lv-stage'), on = !!(document.fullscreenElement || document.webkitFullscreenElement); if(st && !st.classList.contains('lv-pfs')) st.classList.toggle('lv-fs', on); if(!on){ try{ screen.orientation.unlock(); }catch(e){} } };
+const _fsChg = () => { if(!document.fullscreenElement && !document.webkitFullscreenElement){ try{ screen.orientation.unlock(); }catch(e){} } };
 document.addEventListener('fullscreenchange', _fsChg); document.addEventListener('webkitfullscreenchange', _fsChg);
 const vidBtn = (c, r) => {
   const k = vkey(c, r); if(!k) return '';
