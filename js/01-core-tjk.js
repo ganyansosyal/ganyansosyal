@@ -1421,7 +1421,6 @@ async function liveOpen(){
         <button type="button" class="lv-full" onclick="liveFull()" aria-label="Tam ekran"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Tam ekran</button>
       </div>
     </div></div>`;
-  o.addEventListener('click', e => { if(e.target === o) vidCloseModal(); });
   document.body.appendChild(o);
   document.body.style.overflow = 'hidden';
   if(!_vmH){ try{ history.pushState({vm: 1}, ''); _vmH = true; }catch(e){} }
