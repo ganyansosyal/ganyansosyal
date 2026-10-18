@@ -3054,7 +3054,7 @@ body.maint .app,body.maint #auth,body.maint #banned{visibility:hidden!important}
 
 /* ===== Canlı yayın: özel player ===== */
 .lv-stage{position:relative;width:100%;background:#000;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none}
-.vm-live .lv-stage video{display:block;width:100%;aspect-ratio:16/9;background:#000}
+.vm-live .lv-stage video{display:block;width:100%;aspect-ratio:16/9;max-height:none;border-radius:0;margin:0;background:#000}
 .lv-stage:fullscreen,.lv-stage.lv-pfs{width:100vw;height:100vh;height:100dvh;aspect-ratio:auto}
 .lv-stage.lv-pfs{position:fixed;inset:0;z-index:99999}
 .lv-stage.lv-fs video,.lv-stage:fullscreen video{width:100%;height:100%;aspect-ratio:auto;object-fit:contain}
@@ -3084,3 +3084,5 @@ body.lv-pfs-on{overflow:hidden}
 .lv-ctr .sp{flex:1}
 .lv-tm{font-weight:800;font-size:12px;color:#fff;background:var(--red,#e11d48);border-radius:6px;padding:3px 8px;letter-spacing:.4px}
 .lv-tm.late{background:rgba(255,255,255,.18)}
+.vm-live .vm-x{background:var(--ac);color:var(--on)}
+.vm-live .vm-x:active{filter:brightness(.85)}
