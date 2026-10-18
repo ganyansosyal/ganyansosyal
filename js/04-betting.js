@@ -284,7 +284,9 @@ function galipInner(k, id){
   const gun = galipGun(g.t);
   const yy = g.y ? `<span>${esc(g.y)}</span>` : '';
   const vb = (k === 'gal' || k === 'yar') && g.v ? `<button type="button" class="gal-vid" data-v="${esc(g.v)}" data-t="${esc(g.t)}">Videoyu izle</button>` : '';
-  return `<div><small>${o.label}${gun ? ' · ' + esc(gun) : ''}</small><b>${k === 'yar' ? esc(g.d || g.t) : esc(g.t) + (g.d ? ' · ' + esc(g.d) : '')}</b></div>${vb ? `<div class="gal-r">${yy}${vb}</div>` : yy}`;
+  const nob = k === 'yar' && g.no ? `<i class="yar-no"><em>NO</em>${esc(g.no)}</i>` : '';
+  const lh = `<div><small>${o.label}${gun ? ' · ' + esc(gun) : ''}</small><b>${k === 'yar' ? esc(g.d || g.t) : esc(g.t) + (g.d ? ' · ' + esc(g.d) : '')}</b></div>`;
+  return `${nob ? `<div class="yar-l">${nob}${lh}</div>` : lh}${vb ? `<div class="gal-r">${yy}${vb}</div>` : yy}`;
 }
 const yarisBlock = d => d && d.atId ? `<div class="${GL.yar.cls}" data-k="yar" data-id="${esc(d.atId)}">${galipInner('yar', d.atId)}</div>` : '';
 const galipBlock = d => d && d.atId ? Object.keys(GL).filter(k => k !== 'yar').map(k => `<div class="${GL[k].cls}" data-k="${k}" data-id="${esc(d.atId)}">${galipInner(k, d.atId)}</div>`).join('') : '';

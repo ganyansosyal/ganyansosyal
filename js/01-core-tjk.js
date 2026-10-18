@@ -1250,6 +1250,7 @@ async function atSonYaris(atId) {
     const iH = heads.findIndex(h => /hip|şehir|sehir/.test(h));
     const iM = heads.findIndex(h => /msf|mesafe/.test(h));
     const iP = heads.findIndex((h, i) => i !== iM && /pist|zemin/.test(h));
+    const iSt = heads.findIndex(h => h.replace(/[^a-zçğıöşü]/g, '') === 'st');   // St sütunu: atın o yarıştaki numarası
     if (iT < 0) continue;
     for (let i = hi + 1; i < rows.length; i++) {
       const td = rows[i].querySelectorAll('td'); if (td.length <= iT) continue;
@@ -1257,7 +1258,7 @@ async function atSonYaris(atId) {
       if (!/^\d{1,2}[.\/]\d{1,2}[.\/]\d{4}$/.test(g(iT))) continue;   // veri satırı değilse atla
       const pist = (g(iP) || (iM >= 0 && td[iM] ? (td[iM].querySelector('[title],img[alt]') || {}).title || '' : '')).replace(/^K$/i, 'Kum').replace(/^[ÇC]$/i, 'Çim').replace(/^S$/i, 'Sentetik');
       const msf = g(iM).replace(/[^\d]/g, '');
-      const sonuc = { t: g(iT), d: [pist, msf ? msf + 'm' : ''].filter(Boolean).join(' · '), y: [g(iH), g(iT)].filter(Boolean).join(' · ') };
+      const sonuc = { t: g(iT), d: [pist, msf ? msf + 'm' : ''].filter(Boolean).join(' · '), y: [g(iH), g(iT)].filter(Boolean).join(' · '), no: g(iSt).replace(/[^\d]/g, '') };
       try {
         const rh = rows[i].innerHTML.replace(/&amp;/g, '&');
         const mp = rh.match(/(?:https?:)?\/\/video-cdn\.tjk\.org\/videoftp\/[^"'\s<>\\]+?\.mp4/i);
