@@ -3112,3 +3112,10 @@ body.lv-pfs-on{overflow:hidden}
 .idm-tx b{font-weight:700}
 .idm-ok{flex:none;font-size:12px;font-weight:700;opacity:.8}
 html[data-theme=dark] .idm-row{color:#f87171;background:color-mix(in srgb,#ef4444 16%,var(--sf))}
+
+/* Sonuçlar: ayak satırında küçük "İzle" düğmesi (koşu videosu) */
+.so-r{flex-wrap:wrap}
+.so-r .vid-dbg{flex:0 0 100%;margin:4px 0 6px!important;font-size:12.5px!important;padding:8px 10px!important}
+button.so-vid{flex:none;display:inline-flex;align-items:center;gap:5px;border:0;font-family:inherit;font-weight:800;font-size:11px;line-height:1;white-space:nowrap;padding:3px 9px 3px 3px;min-height:22px;border-radius:999px;background:#0f1a30;color:#fff;cursor:pointer;box-shadow:0 0 0 1px rgba(239,68,68,.55)}
+button.so-vid::before{content:"\25B6";flex:none;width:16px;height:16px;border-radius:50%;background:#ef4444;color:#fff;font-size:7px;line-height:16px;text-align:center;padding-left:1px}
+button.so-vid:disabled{opacity:.7}
