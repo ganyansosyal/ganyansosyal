@@ -2038,6 +2038,9 @@ function showToast(m){
   }
   document.addEventListener('click', e => {
     const r = e.target.closest && e.target.closest('.idm-row'); if(!r) return;
-    idmAc(r.getAttribute('data-k'), r.getAttribute('data-a'), r.getAttribute('data-n') || '', r.getAttribute('data-h') || '');
-  });
+    e.stopPropagation();
+    try {
+      idmAc(r.getAttribute('data-k'), r.getAttribute('data-a'), r.getAttribute('data-n') || '', r.getAttribute('data-h') || '');
+    } catch (err) { showToast('İdman hatası: ' + (err && err.message ? err.message : err)); }
+  }, true);
 })();
