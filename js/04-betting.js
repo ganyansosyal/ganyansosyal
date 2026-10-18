@@ -286,11 +286,12 @@ function galipInner(k, id){
   return `<div><small>${o.label}${gun ? ' · ' + esc(gun) : ''}</small><b>${esc(g.t)}${g.d ? ' · ' + esc(g.d) : ''}</b></div>${vb ? `<div class="gal-r">${yy}${vb}</div>` : yy}`;
 }
 const galipBlock = d => d && d.atId ? Object.keys(GL).map(k => `<div class="${GL[k].cls}" data-k="${k}" data-id="${esc(d.atId)}">${galipInner(k, d.atId)}</div>`).join('') : '';
-const galipRefresh = (k, id) => document.querySelectorAll('.hgal[data-k="' + k + '"][data-id="' + id + '"]').forEach(el => { el.innerHTML = galipInner(k, id); });
+const galipRefresh = (k, id) => { const h = galipInner(k, id); document.querySelectorAll('.hgal[data-k="' + k + '"][data-id="' + id + '"]').forEach(el => { if(el._h !== h){ el._h = h; el.innerHTML = h; } }); };
 // Kuyruktaki işleri (türüne göre 3 paralel) çeker, geldikçe kartı yerinde günceller
 function galipPompa(k){
   const o = GL[k];
   if(document.hidden) return; // sekme arka plandaysa çekme, dönünce devam eder
+  if(typeof _lastTouch === 'number' && Date.now() - _lastTouch < 500){ clearTimeout(o.wt); o.wt = setTimeout(() => galipPompa(k), 600); return; }   // kaydırırken ağır ayrıştırma yapma, bitince devam et
   if(k === 'gop' && TJK.atGaloplarToplu && !(o.workerYok && Date.now() - o.workerYok < 600000)){ return galopTopluPompa(); }
   while(o.run < 3 && o.q.length){
     const id = o.q.shift(); o.run++;
