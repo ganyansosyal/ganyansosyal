@@ -1361,27 +1361,126 @@ function vidModal(c, r, k){
 }
 function vidCloseModal(silent){
   try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(e){}
+  if(window._lvT){ clearInterval(window._lvT); window._lvT = null; }
+  if(window._lvP){ try{ window._lvP.destroy(); }catch(e){} window._lvP = null; }
+  document.body.classList.remove('lv-pfs-on'); clearTimeout(window._lvHT); window.liveShow = null;
   const o = $('vm'); if(!o) return;
   const v = o.querySelector('video');
   try{ v.pause(); v.removeAttribute('src'); v.load(); }catch(e){}
   o.remove(); document.body.style.overflow = '';
   if(!silent && _vmH){ _vmH = false; try{ history.back(); }catch(e){} }
 }
-window.addEventListener('popstate', () => { if($('vm')){ _vmH = false; vidCloseModal(true); } });
+window.addEventListener('popstate', () => { const _st = $('lv-stage'); if(_st && _st.classList.contains('lv-pfs')){ liveFull(false); try{ history.pushState({vm: 1}, ''); _vmH = true; }catch(e){} return; } if($('vm')){ _vmH = false; vidCloseModal(true); } });
 document.addEventListener('keydown', e => { if(e.key === 'Escape') vidCloseModal(); });
-// ---- CANLI YAYIN (Yarıştayız, YouTube gömülü player) ----
+// ---- CANLI YAYIN (Yarıştayız / YouTube yayını, kendi kontrollerimizle) ----
+// YouTube'un kendi arayüzü (paylaş, sonra izle, diğer videolar, logo) kapatılır; oynatma, geri alma ve tam ekranı biz yönetiriz.
 // Yayın değişirse yalnızca LIVE_YT_ID güncellenir (youtube.com/live/<ID> adresindeki kod)
 const LIVE_YT_ID = 'I1FgwiDqpS8';
-function liveOpen(){
+const LV_I = {
+  play: '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+  pause: '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>',
+  vol: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/></svg>',
+  mute: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M17 9l5 6M22 9l-5 6"/></svg>',
+  full: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>'
+};
+const lvFmt = t => { t = Math.max(0, Math.floor(t)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+function liveYtApi(){
+  return new Promise(ok => {
+    if(window.YT && window.YT.Player) return ok();
+    const prev = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => { try{ if(prev) prev(); }catch(e){} ok(); };
+    if(!$('yt-api')){ const sc = document.createElement('script'); sc.id = 'yt-api'; sc.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(sc); }
+  });
+}
+async function liveOpen(){
   vidCloseModal(true);
   const o = document.createElement('div'); o.id = 'vm'; o.className = 'vm vm-live';
+  const src = 'https://www.youtube.com/embed/' + LIVE_YT_ID + '?enablejsapi=1&controls=0&autoplay=1&playsinline=1&rel=0&modestbranding=1&fs=0&disablekb=1&iv_load_policy=3&origin=' + encodeURIComponent(location.origin);
   o.innerHTML = `<div class="vm-s" role="dialog" aria-modal="true">
-    <div class="vm-h"><span class="lv-chip"><i></i><span>CANLI</span></span><div class="vm-t">Yarıştayız<small>7/24 canlı at yarışı yayını</small></div><button type="button" class="vm-x" aria-label="Kapat" onclick="vidCloseModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <div class="lv-box"><iframe src="https://www.youtube.com/embed/${LIVE_YT_ID}?autoplay=1&playsinline=1&rel=0" title="Yarıştayız canlı yayın" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-presentation" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
-  </div>`;
+    <div class="vm-h"><span class="lv-chip" id="lv-chip"><i></i><span id="lv-ct">CANLI</span></span><div class="vm-t">Canlı yayın<small>TJK yarış yayını</small></div><button type="button" class="vm-x" aria-label="Kapat" onclick="vidCloseModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="lv-stage lv-paused" id="lv-stage">
+      <iframe id="lv-if" src="${src}" title="Canlı yayın" allow="autoplay; encrypted-media" sandbox="allow-scripts allow-same-origin" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      <div class="lv-cover"></div>
+      <div class="lv-shield" id="lv-shield"></div>
+      <div class="lv-top"><button type="button" class="lv-close" onclick="liveFull(false)">✕ Kapat</button></div>
+      <div class="lv-spin" id="lv-spin"></div>
+      <button type="button" class="lv-big" id="lv-big" aria-label="Oynat / duraklat" onclick="liveToggle()">${LV_I.play}</button>
+      <div class="lv-ctl">
+        <input type="range" class="lv-seek" id="lv-seek" min="0" max="1000" value="1000" step="1" aria-label="Yayında ileri geri">
+        <div class="lv-ctr">
+          <button type="button" id="lv-pp" aria-label="Oynat / duraklat" onclick="liveToggle()">${LV_I.play}</button>
+          <button type="button" class="t" onclick="liveSeek(-10)">↺ 10</button>
+          <button type="button" class="t" onclick="liveSeek(10)">10 ↻</button>
+          <span class="lv-tm" id="lv-tm">CANLI</span>
+          <span class="sp"></span>
+          <button type="button" id="lv-mu" aria-label="Ses" onclick="liveMute()">${LV_I.vol}</button>
+          <button type="button" aria-label="Tam ekran" onclick="liveFull()">${LV_I.full}</button>
+        </div>
+      </div>
+    </div>
+    <div class="lv-panel">
+      <div class="lv-row">
+        <button type="button" class="lv-back" onclick="liveSeek(-30)">↺ 30 sn geri</button>
+        <button type="button" class="lv-live" onclick="liveEdge()"><i></i>Canlıya dön</button>
+      </div>
+      <div class="lv-row"><button type="button" class="lv-full" onclick="liveFull()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Tam ekran</button></div>
+    </div></div>`;
   document.body.appendChild(o);
   document.body.style.overflow = 'hidden';
   if(!_vmH){ try{ history.pushState({vm: 1}, ''); _vmH = true; }catch(e){} }
+  const st = $('lv-stage'), sk = $('lv-seek');
+  window._lvDrag = false; window._lvP = null;
+  window.liveShow = () => { st.classList.remove('lv-hide'); clearTimeout(window._lvHT); window._lvHT = setTimeout(() => { const p = window._lvP; if(p && p.getPlayerState && p.getPlayerState() === 1 && !window._lvDrag) st.classList.add('lv-hide'); }, 3200); };
+  // YouTube'un üstüne şeffaf kalkan: dokunuşlar YouTube'a ulaşmaz, yalnızca bizim kontroller görünür/gizlenir
+  st.addEventListener('pointerdown', e => { if(e.target.id === 'lv-shield'){ if(st.classList.contains('lv-hide')) liveShow(); else st.classList.add('lv-hide'); } else liveShow(); });
+  sk.addEventListener('input', () => { window._lvDrag = true; lvPaint(sk); const p = window._lvP; if(p && p.getDuration){ const d = p.getDuration(), t = d * sk.value / 1000; $('lv-tm').textContent = (d - t) > 5 ? '-' + lvFmt(d - t) : 'CANLI'; } });
+  sk.addEventListener('change', () => { const p = window._lvP; if(p && p.getDuration){ try{ p.seekTo(p.getDuration() * sk.value / 1000, true); p.playVideo(); }catch(e){} } window._lvDrag = false; liveShow(); });
+  liveShow();
+  try{
+    await liveYtApi();
+    if(!$('lv-if')) return;
+    window._lvP = new YT.Player('lv-if', { events: {
+      onReady: () => { try{ window._lvP.playVideo(); }catch(e){} liveUi(); },
+      onStateChange: () => { liveUi(); if(window._lvP.getPlayerState() === 2) st.classList.remove('lv-hide'); }
+    }});
+    if(window._lvT) clearInterval(window._lvT);
+    window._lvT = setInterval(liveTick, 500);
+  }catch(e){}
+}
+const lvPaint = sk => { sk.style.setProperty('--p', (sk.value / 10) + '%'); };
+function liveUi(){
+  const p = window._lvP; if(!p || !p.getPlayerState) return;
+  const stt = p.getPlayerState(), playing = stt === 1 || stt === 3;
+  const ic = playing ? LV_I.pause : LV_I.play, mi = p.isMuted() ? LV_I.mute : LV_I.vol;
+  const pp = $('lv-pp'), big = $('lv-big'), mu = $('lv-mu'), st = $('lv-stage');
+  if(pp && pp._i !== ic){ pp.innerHTML = ic; pp._i = ic; } if(big && big._i !== ic){ big.innerHTML = ic; big._i = ic; }
+  if(mu && mu._i !== mi){ mu.innerHTML = mi; mu._i = mi; }
+  if(st){ st.classList.toggle('lv-wait', stt === 3); st.classList.toggle('lv-paused', !playing); }
+}
+function liveTick(){
+  const p = window._lvP, c = $('lv-chip'), t = $('lv-ct'); if(!p || !p.getDuration || !c || !t) return;
+  const d = p.getDuration(), cur = p.getCurrentTime(); if(!d || d < 1) return;
+  const lag = Math.max(0, d - cur);
+  if(lag > 20){ c.classList.add('late'); t.textContent = 'GERİDE ' + lvFmt(lag); } else { c.classList.remove('late'); t.textContent = 'CANLI'; }
+  const tm = $('lv-tm'), sk = $('lv-seek');
+  if(!window._lvDrag){
+    if(sk){ sk.value = Math.round(1000 * cur / d); lvPaint(sk); }
+    if(tm){ tm.textContent = lag > 5 ? '-' + lvFmt(lag) : 'CANLI'; tm.classList.toggle('late', lag > 5); }
+  }
+  liveUi();
+}
+function liveToggle(){ const p = window._lvP; if(!p) return; const s = p.getPlayerState(); if(s === 1 || s === 3) p.pauseVideo(); else p.playVideo(); if(window.liveShow) liveShow(); }
+function liveSeek(dt){ const p = window._lvP; if(!p) return; const d = p.getDuration(); p.seekTo(Math.max(0, Math.min(d - 1, p.getCurrentTime() + dt)), true); if(window.liveShow) liveShow(); }
+function liveEdge(){ const p = window._lvP; if(!p) return; p.seekTo(p.getDuration(), true); p.playVideo(); }
+function liveMute(){ const p = window._lvP; if(!p) return; if(p.isMuted()) p.unMute(); else p.mute(); liveUi(); }
+// Tam ekran: tarayıcı tam ekran API'si ve ekran yönü kilidi kullanılmaz; yalnızca CSS ile girişte ve çıkışta aynı şekilde çalışır.
+// Telefon dikeyken sahne CSS ile 90° döndürülüp yatay doldurulur.
+function liveFull(on){
+  const st = $('lv-stage'); if(!st) return;
+  if(on === undefined) on = !st.classList.contains('lv-pfs');
+  st.classList.toggle('lv-pfs', on); st.classList.toggle('lv-fs', on);
+  document.body.classList.toggle('lv-pfs-on', on);
+  if(window.liveShow) liveShow();
 }
 const vidV = () => { const o = $('vm'); return o ? o.querySelector('video') : null; };
 function vidSeek(dt){ const v = vidV(); if(v) v.currentTime = Math.max(0, Math.min((v.duration || 1e9), v.currentTime + dt)); }
