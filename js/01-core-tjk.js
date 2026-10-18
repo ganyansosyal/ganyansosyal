@@ -1946,44 +1946,7 @@ function showToast(m){
   // Kaydedilmiş harita (sayfa açılır açılmaz satır hazır olsun, sonradan zıplamasın)
   try { const s = JSON.parse(localStorage.getItem('gs_idmmap') || '{}'); window.__idm = Object.assign(s, window.__idm || {}); } catch (e) { window.__idm = window.__idm || {}; }
   const harita = () => { const iso = (typeof viewIso === 'string' && viewIso) || 'x'; return (window.__idm || {})[iso] || null; };
-  // Kök içindeki "S20" etiketini bulur; istatistik tablosunun hemen altına satırı koyar
-  function isle(kok){
-    if(!kok || kok.nodeType !== 1) return;
-    const H = harita() || {};
-    const w = document.createTreeWalker(kok, NodeFilter.SHOW_TEXT);
-    let n;
-    while((n = w.nextNode())){
-      if((n.nodeValue || '').trim() !== 'S20' || !n.parentElement) continue;
-      let grid = n.parentElement, g = 0;
-      while(grid && g < 6){ const t = grid.textContent || ''; if(/Kulvar/.test(t) && /Yaş/.test(t)) break; grid = grid.parentElement; g++; }
-      if(!grid || g >= 6) continue;
-      // At, kartın metninde isim aranarak değil, kendi satırının (.hr) numarası ve adıyla bulunur (ekürü gibi başka at adlarıyla karışmasın)
-      const hr = grid.closest('.hr'); if(!hr || hr.querySelector('.idm-row')) continue;
-      const adEl = hr.querySelector('.hn b'); if(!adEl) continue;
-      const ad = (adEl.textContent || '').trim();
-      let e;
-      try {
-        const h = horsesFor(city, race).find(x => x.no === parseInt(hr.dataset.no, 10));
-        if(h && h.name === ad && h.d && h.d.idm !== undefined) e = h.d.idm;   // TJK bülteninde bu atın satırından okunan kayıt
-      } catch (err) {}
-      if(e === undefined) e = H[ad.toLocaleUpperCase('tr')];   // eski önbellek: isimle birebir eşleşme
-      if(!e) continue;
-      const d = document.createElement('div');
-      d.className = 'idm-row'; d.setAttribute('data-k', e.k); d.setAttribute('data-a', e.a); d.setAttribute('data-h', e.h || ''); d.setAttribute('data-n', ad);
-      d.innerHTML = '<span class="idm-pl">▶</span><span class="idm-tx"><b>İdman videosunu izle</b></span><span class="idm-ok">İzle ›</span>';
-      grid.after(d);
-    }
-  }
-  // Gözlemci geri çağrısı boyamadan önce çalışır: kart yeniden çizilse bile satır aynı karede geri konur (titreme yok)
-  new MutationObserver(muts => {
-    const hedef = [];
-    muts.forEach(m => m.addedNodes.forEach(x => { if(x.nodeType === 1 && !(x.classList && x.classList.contains('idm-row'))) hedef.push(x); }));
-    hedef.forEach(isle);
-  }).observe(document.body, { childList: true, subtree: true });
-  // Güvenlik: ilk açılış ve veri sonradan geldiyse (DOM değişmeden) eksik kalanları tamamla
-  isle(document.body);
-  setInterval(() => isle(document.body), 2500);
-
+  // (Satır artık kart çizilirken 04-betting.js içinde doğrudan ekleniyor; sayfa taraması yok)
   // Aday adresler: görüntülenen tarihin ayı, bir önceki ve bir sonraki ay (ay başı/sonu idmanları için)
   function adresler(k, a){
     const iso = (typeof viewIso === 'string' && viewIso) ? viewIso : new Date().toISOString().slice(0, 10);
