@@ -2377,7 +2377,6 @@ button.rp-vid:disabled{opacity:.75}
 .vm-live{padding:0;background:rgba(0,0,0,.94)}
 .vm-live .vm-s{max-width:none;max-height:100%;border-radius:0;border:0;padding:0;background:#05070d}
 .vm-live .vm-h{padding:10px 10px 10px 14px}
-.vm-live video{width:100%;aspect-ratio:16/9;max-height:none;border-radius:0;margin:0}
 .vm-live .vm-msg{margin:8px 14px 0}
 .lv-chip{flex:none;display:inline-flex;align-items:center;gap:6px;background:var(--red);color:#fff;font-weight:800;font-size:11px;letter-spacing:.6px;border-radius:7px;padding:4px 8px}
 .lv-chip i{width:6px;height:6px;border-radius:50%;background:#fff}
@@ -3052,3 +3051,36 @@ body.maint .app,body.maint #auth,body.maint #banned{visibility:hidden!important}
 .orn-d span{color:var(--mu)}
 .orn-d b{font-weight:700}
 .orn-more{font-size:12.5px;font-weight:700;color:var(--ac);padding:6px 0 2px;cursor:pointer}
+
+/* ===== Canlı yayın: özel player ===== */
+.lv-stage{position:relative;width:100%;background:#000;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none}
+.vm-live .lv-stage video{display:block;width:100%;aspect-ratio:16/9;background:#000}
+.lv-stage:fullscreen,.lv-stage.lv-pfs{width:100vw;height:100vh;height:100dvh;aspect-ratio:auto}
+.lv-stage.lv-pfs{position:fixed;inset:0;z-index:99999}
+.lv-stage.lv-fs video,.lv-stage:fullscreen video{width:100%;height:100%;aspect-ratio:auto;object-fit:contain}
+body.lv-pfs-on{overflow:hidden}
+.lv-top,.lv-ctl,.lv-big{transition:opacity .22s}
+.lv-stage.lv-hide .lv-top,.lv-stage.lv-hide .lv-ctl,.lv-stage.lv-hide .lv-big{opacity:0;pointer-events:none}
+.lv-top{position:absolute;left:0;right:0;top:0;display:none;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 22px;background:linear-gradient(#000c,#0000)}
+.lv-stage.lv-fs .lv-top{display:flex}
+.lv-close{border:0;font:800 15px inherit;font-family:inherit;color:#fff;background:rgba(255,255,255,.2);backdrop-filter:blur(6px);border-radius:999px;height:42px;padding:0 18px;cursor:pointer}
+.lv-close:active{background:rgba(255,255,255,.35)}
+.lv-ttl{color:#fff;font-weight:800;font-size:14px;opacity:.85}
+.lv-big{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;border:0;display:flex;align-items:center;justify-content:center;color:#fff;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);cursor:pointer}
+.lv-stage.lv-wait .lv-big{opacity:0;pointer-events:none}
+.lv-spin{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:4px solid rgba(255,255,255,.25);border-top-color:#fff;animation:lvspin .8s linear infinite;display:none;pointer-events:none}
+.lv-stage.lv-wait .lv-spin{display:block}
+@keyframes lvspin{to{transform:rotate(360deg)}}
+.lv-ctl{position:absolute;left:0;right:0;bottom:0;padding:26px 12px calc(8px + env(safe-area-inset-bottom,0px));background:linear-gradient(#0000,#000d)}
+.lv-seek{-webkit-appearance:none;appearance:none;display:block;width:100%;height:24px;margin:0 0 4px;background:transparent;cursor:pointer;touch-action:none}
+.lv-seek::-webkit-slider-runnable-track{height:4px;border-radius:3px;background:rgba(255,255,255,.3)}
+.lv-seek::-moz-range-track{height:4px;border-radius:3px;background:rgba(255,255,255,.3)}
+.lv-seek::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;margin-top:-6px;border-radius:50%;background:var(--red,#e11d48);border:2px solid #fff}
+.lv-seek::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:var(--red,#e11d48);border:2px solid #fff}
+.lv-ctr{display:flex;align-items:center;gap:6px}
+.lv-ctr button{border:0;font-family:inherit;color:#fff;background:transparent;height:38px;min-width:38px;padding:0 6px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.lv-ctr button.t{font-weight:800;font-size:12.5px;background:rgba(255,255,255,.12);padding:0 10px}
+.lv-ctr button:active{background:rgba(255,255,255,.25)}
+.lv-ctr .sp{flex:1}
+.lv-tm{font-weight:800;font-size:12px;color:#fff;background:var(--red,#e11d48);border-radius:6px;padding:3px 8px;letter-spacing:.4px}
+.lv-tm.late{background:rgba(255,255,255,.18)}
