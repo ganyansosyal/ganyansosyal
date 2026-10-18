@@ -3140,3 +3140,11 @@ button.so-vid:disabled::after{content:"…";font-size:13px}
 html .anim{transition:none!important}
 html .hm-b::after,html .hd-s::after{transition:none!important}
 nav button.nav-set .ni:after{animation:none!important}
+
+/* Video altı: atın adı + numarası ve koşunun ilk 4'ü */
+.vm-me{display:flex;align-items:center;gap:8px;margin:12px 12px 0;background:rgba(124,58,237,.22);outline:1px solid rgba(167,139,250,.55);border-radius:10px;padding:7px 9px;color:#e8eefc;font-size:12px;font-weight:800;min-width:0}
+.vm-me .sc{flex:none}
+.vm-me .nm{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.vm-me .nm span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vm-me .nm small{font-size:10.5px;font-weight:800;color:#c4b5fd}
+.vm-res .me{background:rgba(124,58,237,.24);outline:1px solid rgba(167,139,250,.7)}
