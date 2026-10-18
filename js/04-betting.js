@@ -257,8 +257,8 @@ function takiChips(d){
 // ---- Son galibiyet + son galop (at sayfalarından, cihazda 12 saat saklanır) ----
 const GALIP_TTL = 12 * 3600 * 1000;
 const GL = {
-  yar: { key: 'gs_yaris_v1', label: 'Son yarış', none: 'Yarış kaydı yok', fn: 'atSonYaris', cls: 'hgal hyar' },
-  gal: { key: 'gs_galip_v3', label: 'Son galibiyet', none: 'Kayıtlı galibiyeti yok', fn: 'atSonGalibiyet', cls: 'hgal' },
+  yar: { key: 'gs_yaris_v2', label: 'Son yarış', none: 'Yarış kaydı yok', fn: 'atSonYaris', cls: 'hgal hyar' },
+  gal: { key: 'gs_galip_v5', label: 'Son galibiyet', none: 'Kayıtlı galibiyeti yok', fn: 'atSonGalibiyet', cls: 'hgal' },
   gop: { key: 'gs_galop_v2', label: 'Son galop', none: 'İdman kaydı yok', fn: 'atSonGalop', cls: 'hgal hgop' }
 };
 Object.keys(GL).forEach(k => {
@@ -283,7 +283,7 @@ function galipInner(k, id){
   if(g.n) return `<div><small>${o.label}</small><b class="gm">${o.none}</b></div>`;
   const gun = galipGun(g.t);
   const yy = g.y ? `<span>${esc(g.y)}</span>` : '';
-  const vb = (k === 'gal' || k === 'yar') && g.v ? `<button type="button" class="gal-vid" data-v="${esc(g.v)}" data-t="${esc(g.t)}">Videoyu izle</button>` : '';
+  const vb = (k === 'gal' || k === 'yar') && g.v ? `<button type="button" class="gal-vid" data-v="${esc(g.v)}" data-t="${esc(g.t)}" data-l="${esc(o.label)}" data-no="${esc(g.no || '')}" data-sh="${esc(g.sh || '')}" data-kn="${esc(g.kn || '')}">Videoyu izle</button>` : '';
   const nob = k === 'yar' && g.no ? `<i class="yar-no"><em>NO</em>${esc(g.no)}</i>` : '';
   const lh = `<div><small>${o.label}${gun ? ' · ' + esc(gun) : ''}</small><b>${k === 'yar' ? esc(g.d || g.t) : esc(g.t) + (g.d ? ' · ' + esc(g.d) : '')}</b></div>`;
   return `${nob ? `<div class="yar-l">${nob}${lh}</div>` : lh}${vb ? `<div class="gal-r">${yy}${vb}</div>` : yy}`;

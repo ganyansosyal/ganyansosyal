@@ -1203,6 +1203,8 @@ async function atSonGalibiyet(atId) {
     const iJk = heads.findIndex(h => /jokey/.test(h));
     const iC = heads.findIndex(h => /cins|grup|grub/.test(h));
     const iG = heads.findIndex(h => /^gny|ganyan/.test(h));
+    const iSt = heads.findIndex(h => h.replace(/[^a-zçğıöşü]/g, '') === 'st');   // atın o yarıştaki numarası
+    const iK = heads.findIndex(h => /^k\.?\s*no/.test(h));   // koşu numarası
     if (iT < 0 || iS < 0) continue;
     for (let i = hi + 1; i < rows.length; i++) {
       const td = rows[i].querySelectorAll('td'); if (td.length <= iS) continue;
@@ -1210,7 +1212,7 @@ async function atSonGalibiyet(atId) {
       const g = idx => idx >= 0 && td[idx] ? norm(td[idx].textContent) : '';
       const pist = (g(iP) || (iM >= 0 && td[iM] ? (td[iM].querySelector('[title],img[alt]') || {}).title || '' : '')).replace(/^K$/i, 'Kum').replace(/^[ÇC]$/i, 'Çim').replace(/^S$/i, 'Sentetik');
       const gny = g(iG).replace(/[^\d.,]/g, '');
-      const sonuc = { t: g(iT), d: g(iD), y: [g(iH), g(iM), pist].filter(Boolean).join(' · '), k: [g(iC), g(iJk), gny ? 'Gny ' + gny : ''].filter(Boolean).join(' · ') };
+      const sonuc = { t: g(iT), d: g(iD), y: [g(iH), g(iM), pist].filter(Boolean).join(' · '), k: [g(iC), g(iJk), gny ? 'Gny ' + gny : ''].filter(Boolean).join(' · '), no: g(iSt).replace(/[^\d]/g, ''), sh: g(iH), kn: (parseInt(g(iK)) || '') };
       // Galibiyet koşusunun videosu: satırdaki bağlantıdan (mp4 / YarisVideo sayfası / KosuKodu) bul
       try {
         const rh = rows[i].innerHTML.replace(/&amp;/g, '&');
@@ -1251,6 +1253,7 @@ async function atSonYaris(atId) {
     const iM = heads.findIndex(h => /msf|mesafe/.test(h));
     const iP = heads.findIndex((h, i) => i !== iM && /pist|zemin/.test(h));
     const iSt = heads.findIndex(h => h.replace(/[^a-zçğıöşü]/g, '') === 'st');   // St sütunu: atın o yarıştaki numarası
+    const iK = heads.findIndex(h => /^k\.?\s*no/.test(h));   // koşu numarası
     if (iT < 0) continue;
     for (let i = hi + 1; i < rows.length; i++) {
       const td = rows[i].querySelectorAll('td'); if (td.length <= iT) continue;
@@ -1258,7 +1261,7 @@ async function atSonYaris(atId) {
       if (!/^\d{1,2}[.\/]\d{1,2}[.\/]\d{4}$/.test(g(iT))) continue;   // veri satırı değilse atla
       const pist = (g(iP) || (iM >= 0 && td[iM] ? (td[iM].querySelector('[title],img[alt]') || {}).title || '' : '')).replace(/^K$/i, 'Kum').replace(/^[ÇC]$/i, 'Çim').replace(/^S$/i, 'Sentetik');
       const msf = g(iM).replace(/[^\d]/g, '');
-      const sonuc = { t: g(iT), d: [pist, msf ? msf + 'm' : ''].filter(Boolean).join(' · '), y: [g(iH), g(iT)].filter(Boolean).join(' · '), no: g(iSt).replace(/[^\d]/g, '') };
+      const sonuc = { t: g(iT), d: [pist, msf ? msf + 'm' : ''].filter(Boolean).join(' · '), y: [g(iH), g(iT)].filter(Boolean).join(' · '), no: g(iSt).replace(/[^\d]/g, ''), sh: g(iH), kn: (parseInt(g(iK)) || '') };
       try {
         const rh = rows[i].innerHTML.replace(/&amp;/g, '&');
         const mp = rh.match(/(?:https?:)?\/\/video-cdn\.tjk\.org\/videoftp\/[^"'\s<>\\]+?\.mp4/i);
@@ -1277,6 +1280,56 @@ async function atSonYaris(atId) {
       return sonuc;
     }
     return { n: 1 };
+  }
+  return null;
+}
+// ---- GEÇMİŞ BİR KOŞUNUN İLK 4'Ü (TJK günlük sonuç sayfasından) ----
+// tarih: '09.10.2026'. Dönüş: [{sr, no, ad, g}] | null. Sonuç değişmediği için 30 gün saklanır.
+async function kosuIlk4(sehirAdi, tarih, kosuNo) {
+  const m = /^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/.exec(tarih || ''); if (!m || !kosuNo) return null;
+  const iso = m[3] + '-' + String(m[2]).padStart(2, '0') + '-' + String(m[1]).padStart(2, '0');
+  const ck = 'gs_ilk4_v1', key = turkceNormalizeAnahtar(sehirAdi) + '|' + iso + '|' + kosuNo;
+  let depo = {}; try { depo = JSON.parse(localStorage.getItem(ck) || '{}') || {}; } catch (e) {}
+  if (depo[key] && Date.now() - depo[key].ts < 30 * 86400000) return depo[key].v;
+  const ls = await sehirleriGetir(iso);
+  const hedef = turkceNormalizeAnahtar(sehirAdi);
+  const sh = (ls.sehirler || []).find(s => { const a = turkceNormalizeAnahtar(s.adi); return a.startsWith(hedef) || hedef.startsWith(a); });
+  if (!sh) return null;
+  const era = eraHesapla(iso);
+  const url = `https://www.tjk.org/TR/yarissever/Info/Sehir/GunlukYarisSonuclari?SehirId=${sh.id}&QueryParameter_Tarih=${encodeURIComponent(isoyuTjkTarihineCevir(iso))}&SehirAdi=${encodeURIComponent(sh.adi)}&Era=${era}`;
+  const html = await (await fetchWithTimeout(url, 30000, 1)).text();
+  const dom = new DOMParser().parseFromString(html, 'text/html');
+  const basliklar = Array.from(dom.body.querySelectorAll('*')).filter(el => el.children.length <= 2 && /^\d+\.\s*Koşu/.test((el.textContent || '').trim()) && (el.textContent || '').trim().length < 400);
+  const norm = s => String(s || '').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+  for (const tablo of dom.querySelectorAll('table')) {
+    if (tablo.querySelector('table')) continue;
+    const trs = Array.from(tablo.querySelectorAll('tr'));
+    const bi = trs.findIndex(tr => /At\s*İsmi/i.test(tr.textContent)); if (bi < 0) continue;
+    let no = null;
+    for (const b of basliklar) { if (b.compareDocumentPosition(tablo) & Node.DOCUMENT_POSITION_FOLLOWING) no = parseInt(b.textContent.trim()); else break; }
+    if (no !== +kosuNo) continue;
+    const bas = Array.from(trs[bi].querySelectorAll('th,td')).map(c => norm(c.textContent));
+    let iS = bas.findIndex(h => /^(S|Sıra|Sira)$/i.test(h)); if (iS < 0) iS = 0;
+    const iIsim = bas.findIndex(h => /At\s*İsmi/i.test(h));
+    const iGny = bas.findIndex(h => /^Gny$/i.test(h));
+    const iSt = bas.findIndex(h => /^St$/i.test(h));
+    const iNo = bas.findIndex((h, i) => i !== iS && /^(At\s*No|No|Nu|Numara)$/i.test(h));
+    const out = [];
+    trs.slice(bi + 1).forEach(tr => {
+      const td = tr.querySelectorAll('td'); if (td.length <= Math.max(iS, iIsim)) return;
+      const sr = parseInt(td[iS].textContent.trim()); if (!sr || sr > 4) return;
+      const ham = norm(td[iIsim].textContent);
+      const mN = ham.match(/\(\s*(\d{1,2})\s*\)/);
+      const ad = ham.replace(/\(\s*\d{1,2}\s*\)/g, ' ').replace(/\s*\([A-Z]{2,4}\)\s*$/, '').replace(/\s+/g, ' ').trim();
+      const cellNo = x => x >= 0 && td[x] ? parseInt(td[x].textContent) || 0 : 0;
+      const g = iGny >= 0 && td[iGny] ? norm(td[iGny].textContent) : '';
+      out.push({ sr, no: cellNo(iSt) || cellNo(iNo) || (mN ? +mN[1] : 0), ad, g: /^\d+[.,]\d+$/.test(g) ? g : '' });
+    });
+    out.sort((a, b) => a.sr - b.sr);
+    if (!out.length) return null;
+    depo[key] = { ts: Date.now(), v: out };
+    try { localStorage.setItem(ck, JSON.stringify(depo)); } catch (e) {}
+    return out;
   }
   return null;
 }
@@ -1344,7 +1397,7 @@ async function atGaloplarToplu(ids) {
     return j;
   } finally { clearTimeout(zt); }
 }
-return { atSonGalibiyet, atSonYaris, atSonGalop, atGaloplarToplu, bugunIso, sehirleriGetir, sehirProgramiGetir, sonuclariGetir, oranlariGetir, parseKosular, fetchHtml: async url => (await fetchWithTimeout(url, 20000, 1)).text() };
+return { atSonGalibiyet, atSonYaris, kosuIlk4, atSonGalop, atGaloplarToplu, bugunIso, sehirleriGetir, sehirProgramiGetir, sonuclariGetir, oranlariGetir, parseKosular, fetchHtml: async url => (await fetchWithTimeout(url, 20000, 1)).text() };
 })();
 
 
@@ -2022,15 +2075,32 @@ function showToast(m){
   const onbKey = () => 'gs_idm_' + ((typeof viewIso === 'string' && viewIso) || 'x');
   const onbOku = id => { try { return (JSON.parse(localStorage.getItem(onbKey()) || '{}'))[id] || ''; } catch (e) { return ''; } };
   const onbYaz = (id, u) => { try { const o = JSON.parse(localStorage.getItem(onbKey()) || '{}'); o[id] = u; localStorage.setItem(onbKey(), JSON.stringify(o)); } catch (e) {} };
-  function idmAc(k, a, ad, href, gal){
+  // Videonun altı: atın adı + o yarıştaki numarası, ardından koşunun ilk 4'ü
+  function idmEk(box, ad, ek){
+    if(!box || !ek) return;
+    const no = parseInt(ek.no) || 0;
+    const nrmA = s => String(s || '').toLocaleUpperCase('tr').replace(/[^A-ZÇĞİÖŞÜ0-9]/g, '');
+    if(ad || no) box.innerHTML = '<div class="vm-me">' + (no ? sc(no) : '') + '<div class="nm"><span>' + esc(ad || '') + '</span><small>' + esc(ek.l || '') + (ek.sh || ek.kn ? ' · ' + esc([ek.sh, ek.kn ? ek.kn + '. Koşu' : ''].filter(Boolean).join(' ')) : '') + '</small></div></div>';
+    if(!ek.kn || !ek.sh || !ek.dt) return;
+    TJK.kosuIlk4(ek.sh, ek.dt, ek.kn).then(l => {
+      if(!l || !l.length || !document.body.contains(box)) return;
+      const rows = l.map(x => {
+        const mine = (no && x.no === no) || (ad && nrmA(x.ad) === nrmA(ad));
+        return '<div class="r' + x.sr + (mine ? ' me' : '') + '"><i class="rk">' + x.sr + '</i>' + (x.no ? sc(x.no) : '') + '<div class="nm"><span>' + esc(x.ad) + '</span><small>' + (['Kazandı', '2. oldu', '3. oldu', '4. oldu'][x.sr - 1] || x.sr + '. oldu') + '</small></div>' + (x.g ? '<em>Ganyan ' + esc(x.g) + '</em>' : '') + '</div>';
+      }).join('');
+      box.insertAdjacentHTML('beforeend', '<div class="vm-rt">Koşu sonucu</div><div class="vm-res">' + rows + '</div>');
+    }).catch(() => {});
+  }
+  function idmAc(k, a, ad, href, gal, ek){
     vidCloseModal(true);
     const sayfa = href || ('https://www.tjk.org/TR/yarissever/Info/idmanpisti/Kosu?KosuKodu=' + encodeURIComponent(k) + '&Atkodu=' + encodeURIComponent(a));
     const o = document.createElement('div'); o.id = 'vm'; o.className = 'vm vm-wide';
     o.innerHTML = '<div class="vm-s" role="dialog" aria-modal="true">' +
-      '<div class="vm-h"><span class="vm-ch">▶</span><div class="vm-t">' + esc(ad) + '<small>' + (gal ? 'Son galibiyet · ' + esc(gal) : 'İdman görüntüsü · ' + esc(k + '-' + a)) + '</small></div>' +
+      '<div class="vm-h"><span class="vm-ch">▶</span><div class="vm-t">' + esc(ad) + '<small>' + (gal ? esc((ek && ek.l) || 'Son galibiyet') + ' · ' + esc(gal) : 'İdman görüntüsü · ' + esc(k + '-' + a)) + '</small></div>' +
       '<button type="button" class="vm-x" aria-label="Kapat" onclick="vidCloseModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>' +
       '<video controls playsinline preload="metadata" controlsList="nodownload" style="display:none"></video>' +
       '<div class="idm-err" style="color:#cbd5e1;padding:18px 14px;font-weight:700">Video aranıyor…</div>' +
+      '<div class="idm-ek"></div>' +
       '<div class="vm-b" style="padding:10px 12px">' +
       '<button type="button" onclick="vidSeek(-10)">↺ 10</button><button type="button" onclick="vidSeek(10)">10 ↻</button><span class="sp"></span>' +
       '<div class="vm-seg"><button type="button" onclick="vidSpeed(this,0.5)">0.5x</button><button type="button" class="on" onclick="vidSpeed(this,1)">1x</button><button type="button" onclick="vidSpeed(this,2)">2x</button></div>' +
@@ -2041,6 +2111,7 @@ function showToast(m){
     document.body.style.overflow = 'hidden';
     if(!_vmH){ try{ history.pushState({vm: 1}, ''); _vmH = true; }catch(e){} }
     const v = o.querySelector('video'), msg = o.querySelector('.idm-err');
+    if(gal && ek){ try { idmEk(o.querySelector('.idm-ek'), ad, ek); } catch (e) {} }
     const esc2 = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
     const oynat = u => { if(!document.body.contains(o)) return; msg.style.display = 'none'; v.style.display = 'block'; v.src = u; v.play().catch(() => {}); };
     (async () => {
@@ -2060,7 +2131,7 @@ function showToast(m){
         v.addEventListener('error', () => { try { const o = JSON.parse(localStorage.getItem(onbKey()) || '{}'); delete o[k + '-' + a]; localStorage.setItem(onbKey(), JSON.stringify(o)); } catch (e) {} msg.style.display = 'block'; v.style.display = 'none'; msg.innerHTML = 'Video yüklenemedi.<br><small style="font-weight:500;opacity:.8;word-break:break-all">' + esc2(bulunan) + '</small>'; }, { once: true });
         return oynat(bulunan);
       }
-      if(gal){ v.style.display = 'none'; msg.style.display = 'block'; msg.innerHTML = 'Galibiyet videosu bulunamadı.<br><small style="font-weight:500;opacity:.8;word-break:break-all">Neden: ' + esc2(hata || 'bilinmiyor') + '<br>Sayfa: ' + esc2(sayfa) + '</small>'; return; }
+      if(gal){ v.style.display = 'none'; msg.style.display = 'block'; msg.innerHTML = 'Video bulunamadı.<br><small style="font-weight:500;opacity:.8;word-break:break-all">Neden: ' + esc2(hata || 'bilinmiyor') + '<br>Sayfa: ' + esc2(sayfa) + '</small>'; return; }
       // 2) Sayfa okunamadıysa: adresi tarihten tahmin ederek dene
       const c = adresler(k, a); let i = 0;
       v.addEventListener('error', () => {
@@ -2077,7 +2148,7 @@ function showToast(m){
       e.stopPropagation();
       try {
         const u = gb.getAttribute('data-v') || '', hr = gb.closest('.hr'), nb = hr && hr.querySelector('.hn b');
-        idmAc('g', (u.match(/KosuKodu=(-?\d+)/) || u.match(/([\w-]+)\.mp4/) || [0, u.slice(-24)])[1], nb ? nb.textContent.trim() : '', u, gb.getAttribute('data-t') || '');
+        idmAc('g', (u.match(/KosuKodu=(-?\d+)/) || u.match(/([\w-]+)\.mp4/) || [0, u.slice(-24)])[1], nb ? nb.textContent.trim() : '', u, gb.getAttribute('data-t') || '', { l: gb.getAttribute('data-l') || '', no: gb.getAttribute('data-no') || '', sh: gb.getAttribute('data-sh') || '', kn: gb.getAttribute('data-kn') || '', dt: gb.getAttribute('data-t') || '' });
       } catch (err) { showToast('Video hatası: ' + (err && err.message ? err.message : err)); }
       return;
     }
