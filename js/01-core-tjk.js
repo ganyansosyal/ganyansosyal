@@ -1362,7 +1362,6 @@ function vidModal(c, r, k){
 function vidCloseModal(silent){
   try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(e){}
   if(window._lvT){ clearInterval(window._lvT); window._lvT = null; }
-  clearTimeout(window._lvBootT); clearTimeout(window._lvPlayT); window._lvPlayT = null;
   if(window._lvP){ try{ window._lvP.destroy(); }catch(e){} window._lvP = null; }
   document.body.classList.remove('lv-pfs-on'); clearTimeout(window._lvHT); window.liveShow = null;
   const o = $('vm'); if(!o) return;
@@ -1399,7 +1398,7 @@ async function liveOpen(){
   const src = 'https://www.youtube.com/embed/' + LIVE_YT_ID + '?enablejsapi=1&controls=0&autoplay=1&playsinline=1&rel=0&modestbranding=1&fs=0&disablekb=1&iv_load_policy=3&origin=' + encodeURIComponent(location.origin);
   o.innerHTML = `<div class="vm-s" role="dialog" aria-modal="true">
     <div class="vm-h"><span class="lv-chip" id="lv-chip"><i></i><span id="lv-ct">CANLI</span></span><div class="vm-t">Canlı yayın<small>TJK yarış yayını</small></div><button type="button" class="vm-x" aria-label="Kapat" onclick="vidCloseModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <div class="lv-stage lv-paused lv-boot" id="lv-stage">
+    <div class="lv-stage lv-paused" id="lv-stage">
       <iframe id="lv-if" src="${src}" title="Canlı yayın" allow="autoplay; encrypted-media" sandbox="allow-scripts allow-same-origin" referrerpolicy="strict-origin-when-cross-origin"></iframe>
       <div class="lv-cover"></div>
       <div class="lv-shield" id="lv-shield"></div>
@@ -1435,8 +1434,6 @@ async function liveOpen(){
   sk.addEventListener('input', () => { window._lvDrag = true; lvPaint(sk); const p = window._lvP; if(p && p.getDuration){ const d = p.getDuration(), t = d * sk.value / 1000; $('lv-tm').textContent = (d - t) > 5 ? '-' + lvFmt(d - t) : 'CANLI'; } });
   sk.addEventListener('change', () => { const p = window._lvP; if(p && p.getDuration){ try{ p.seekTo(p.getDuration() * sk.value / 1000, true); p.playVideo(); }catch(e){} } window._lvDrag = false; liveShow(); });
   liveShow();
-  // YouTube'un başlangıçta kısa süre gösterdiği başlık / öneri yazıları bitene kadar yayın siyah katmanın arkasında kalır
-  window._lvBootT = setTimeout(() => { st.classList.remove('lv-boot'); }, 9000);
   try{
     await liveYtApi();
     if(!$('lv-if')) return;
@@ -1456,7 +1453,6 @@ function liveUi(){
   const pp = $('lv-pp'), big = $('lv-big'), mu = $('lv-mu'), st = $('lv-stage');
   if(pp && pp._i !== ic){ pp.innerHTML = ic; pp._i = ic; } if(big && big._i !== ic){ big.innerHTML = ic; big._i = ic; }
   if(mu && mu._i !== mi){ mu.innerHTML = mi; mu._i = mi; }
-  if(st && stt === 1 && !window._lvPlayT){ window._lvPlayT = setTimeout(() => { st.classList.remove('lv-boot'); }, 4500); }
   if(st){ st.classList.toggle('lv-wait', stt === 3); st.classList.toggle('lv-paused', !playing); }
 }
 function liveTick(){
