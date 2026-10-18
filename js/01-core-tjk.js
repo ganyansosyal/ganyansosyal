@@ -1361,159 +1361,27 @@ function vidModal(c, r, k){
 }
 function vidCloseModal(silent){
   try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(e){}
-  document.body.classList.remove('lv-pfs-on'); clearTimeout(window._lvHT); window.liveShow = null;
-  if(window._lvT){ clearInterval(window._lvT); window._lvT = null; }
-  if(window._hls){ try{ window._hls.destroy(); }catch(e){} window._hls = null; }
   const o = $('vm'); if(!o) return;
   const v = o.querySelector('video');
   try{ v.pause(); v.removeAttribute('src'); v.load(); }catch(e){}
   o.remove(); document.body.style.overflow = '';
   if(!silent && _vmH){ _vmH = false; try{ history.back(); }catch(e){} }
 }
-window.addEventListener('popstate', () => { const _st = $('lv-stage'); if(_st && _st.classList.contains('lv-pfs')){ liveFull(false); try{ history.pushState({vm: 1}, ''); _vmH = true; }catch(e){} return; } if($('vm')){ _vmH = false; vidCloseModal(true); } });
+window.addEventListener('popstate', () => { if($('vm')){ _vmH = false; vidCloseModal(true); } });
 document.addEventListener('keydown', e => { if(e.key === 'Escape') vidCloseModal(); });
-// ---- CANLI YAYIN (TJK / Tay TV, HLS) ----
-const LIVE_URL = 'https://tjktv-live.tjk.org/taytv/taytv.m3u8';
-function liveMsg(t){ const e = $('vm-msg'); if(e){ e.textContent = t; e.style.display = t ? 'block' : 'none'; } }
-function liveHlsYukle(){
-  return new Promise((ok, no) => {
-    if(window.Hls) return ok(window.Hls);
-    const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js';
-    sc.onload = () => ok(window.Hls); sc.onerror = () => no(new Error('hls.js yüklenemedi'));
-    document.head.appendChild(sc);
-  });
-}
-const LV_I = {
-  play: '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
-  pause: '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>',
-  vol: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/></svg>',
-  mute: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M17 9l5 6M22 9l-5 6"/></svg>',
-  full: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>'
-};
-const lvFmt = t => { t = Math.max(0, Math.floor(t)); const m = Math.floor(t / 60), s = t % 60; return m + ':' + String(s).padStart(2, '0'); };
-async function liveOpen(){
+// ---- CANLI YAYIN (Yarıştayız, YouTube gömülü player) ----
+// Yayın değişirse yalnızca LIVE_YT_ID güncellenir (youtube.com/live/<ID> adresindeki kod)
+const LIVE_YT_ID = 'I1FgwiDqpS8';
+function liveOpen(){
   vidCloseModal(true);
   const o = document.createElement('div'); o.id = 'vm'; o.className = 'vm vm-live';
   o.innerHTML = `<div class="vm-s" role="dialog" aria-modal="true">
-    <div class="vm-h"><span class="lv-chip" id="lv-chip"><i></i><span id="lv-ct">CANLI</span></span><div class="vm-t">Tay TV<small>TJK yarış yayını</small></div><button type="button" class="vm-x" aria-label="Kapat" onclick="vidCloseModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <div class="lv-stage" id="lv-stage">
-      <video playsinline autoplay webkit-playsinline></video>
-      <div class="lv-top"><button type="button" class="lv-close" onclick="liveFull(false)">✕ Kapat</button><span class="lv-ttl">Tay TV · Canlı yayın</span></div>
-      <div class="lv-spin" id="lv-spin"></div>
-      <button type="button" class="lv-big" id="lv-big" aria-label="Oynat / duraklat" onclick="liveToggle()">${LV_I.pause}</button>
-      <div class="lv-ctl">
-        <input type="range" class="lv-seek" id="lv-seek" min="0" max="1000" value="1000" step="1" aria-label="Yayında ileri geri">
-        <div class="lv-ctr">
-          <button type="button" id="lv-pp" aria-label="Oynat / duraklat" onclick="liveToggle()">${LV_I.pause}</button>
-          <button type="button" class="t" onclick="liveSeek(-10)">↺ 10</button>
-          <button type="button" class="t" onclick="liveSeek(10)">10 ↻</button>
-          <span class="lv-tm" id="lv-tm">CANLI</span>
-          <span class="sp"></span>
-          <button type="button" id="lv-mu" aria-label="Ses" onclick="liveMute()">${LV_I.vol}</button>
-          <button type="button" aria-label="Tam ekran" onclick="liveFull()">${LV_I.full}</button>
-        </div>
-      </div>
-    </div>
-    <div class="vm-msg" id="vm-msg"></div>
-    <div class="lv-panel">
-      <div class="lv-row">
-        <button type="button" class="lv-live" onclick="liveEdge()"><i></i>Canlıya dön</button>
-        <button type="button" class="lv-full" onclick="liveFull()" aria-label="Tam ekran"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Tam ekran</button>
-      </div>
-    </div></div>`;
+    <div class="vm-h"><span class="lv-chip"><i></i><span>CANLI</span></span><div class="vm-t">Yarıştayız<small>7/24 canlı at yarışı yayını</small></div><button type="button" class="vm-x" aria-label="Kapat" onclick="vidCloseModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="lv-box"><iframe src="https://www.youtube.com/embed/${LIVE_YT_ID}?autoplay=1&playsinline=1&rel=0" title="Yarıştayız canlı yayın" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-presentation" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+  </div>`;
   document.body.appendChild(o);
   document.body.style.overflow = 'hidden';
   if(!_vmH){ try{ history.pushState({vm: 1}, ''); _vmH = true; }catch(e){} }
-  const v = o.querySelector('video'), st = $('lv-stage'), sk = $('lv-seek');
-  window._lvDrag = false; window._lvStall = 0; window._lvLast = -1; window._lvRetry = 0;
-  // --- kontrollerin otomatik gizlenmesi ---
-  window.liveShow = () => { st.classList.remove('lv-hide'); clearTimeout(window._lvHT); window._lvHT = setTimeout(() => { if(!v.paused && !window._lvDrag) st.classList.add('lv-hide'); }, 3200); };
-  st.addEventListener('pointerdown', e => { if(e.target === st || e.target === v){ if(st.classList.contains('lv-hide')) liveShow(); else st.classList.add('lv-hide'); } else liveShow(); });
-  // --- ilerleme çubuğu: yayının geri alınabilir aralığında gezinir ---
-  sk.addEventListener('input', () => { window._lvDrag = true; lvPaint(sk); const r = liveRange(); if(r){ const t = r[0] + (r[1] - r[0]) * sk.value / 1000; $('lv-tm').textContent = (r[1] - t) > 5 ? '-' + lvFmt(r[1] - t) : 'CANLI'; } });
-  sk.addEventListener('change', () => { const r = liveRange(); if(r){ try{ v.currentTime = r[0] + (r[1] - r[0]) * sk.value / 1000; v.play().catch(() => {}); }catch(e){} } window._lvDrag = false; liveShow(); });
-  v.addEventListener('play', liveUi); v.addEventListener('pause', () => { liveUi(); st.classList.remove('lv-hide'); });
-  v.addEventListener('waiting', () => st.classList.add('lv-wait')); v.addEventListener('stalled', () => st.classList.add('lv-wait'));
-  v.addEventListener('playing', () => { st.classList.remove('lv-wait'); liveMsg(''); liveUi(); });
-  v.addEventListener('canplay', () => st.classList.remove('lv-wait'));
-  v.addEventListener('volumechange', liveUi);
-  if(window._lvT) clearInterval(window._lvT);
-  window._lvT = setInterval(liveTick, 500);
-  liveShow(); liveUi();
-  const native = () => { v.src = LIVE_URL; v.play().catch(() => {}); };
-  v.addEventListener('error', () => { if(!window._hls) liveMsg('Yayın açılamadı. TJK yayını şu an kapalı olabilir ya da bu bağlantıyı engelliyor.'); });
-  try{
-    const Hls = await liveHlsYukle();
-    if(!$('vm')) return;
-    if(Hls && Hls.isSupported()){
-      const h = new Hls({
-        lowLatencyMode: false,            // düşük gecikme yerine akıcılık
-        enableWorker: true,
-        maxBufferLength: 30, maxMaxBufferLength: 60,
-        backBufferLength: 900,            // geri alabilmek için arkada 15 dk'ya kadar tut (sunucu penceresi izin verdiği kadar)
-        liveSyncDurationCount: 4,         // canlı kenardan 4 parça geride başla: takılma azalır
-        liveMaxLatencyDurationCount: 12,
-        manifestLoadingMaxRetry: 6, levelLoadingMaxRetry: 6, fragLoadingMaxRetry: 6,
-        nudgeMaxRetry: 8,
-        capLevelToPlayerSize: true,       // ekran boyutundan yüksek kaliteyi çekme: gereksiz yük ve takılma olmaz
-        abrBandWidthFactor: 0.8, abrBandWidthUpFactor: 0.6   // internet yavaşlarsa kaliteyi hızlı düşür, yükselirken temkinli ol
-      });
-      window._hls = h;
-      h.on(Hls.Events.ERROR, (ev, d) => {
-        if(!d || !d.fatal) return;
-        if(d.type === Hls.ErrorTypes.NETWORK_ERROR && window._lvRetry < 8){ window._lvRetry++; liveMsg('Bağlantı koptu, yeniden deneniyor…'); setTimeout(() => { try{ h.startLoad(); }catch(e){} }, 1000 * window._lvRetry); return; }
-        if(d.type === Hls.ErrorTypes.MEDIA_ERROR && window._lvRetry < 8){ window._lvRetry++; try{ h.recoverMediaError(); }catch(e){} return; }
-        try{ h.destroy(); }catch(e){} window._hls = null; native();   // hls.js olmazsa tarayıcının kendi oynatıcısı
-      });
-      h.on(Hls.Events.FRAG_LOADED, () => { window._lvRetry = 0; liveMsg(''); });
-      h.loadSource(LIVE_URL); h.attachMedia(v);
-      v.play().catch(() => {});
-    } else native();
-  }catch(e){ native(); }
-}
-// Geri alınabilir aralık: [başlangıç, canlı kenar]
-function liveRange(){ const v = vidV(); if(!v) return null; const sk = v.seekable; if(!sk || !sk.length) return null; const a = sk.start(0), b = sk.end(sk.length - 1); return b > a ? [a, b] : null; }
-const lvPaint = sk => { sk.style.setProperty('--p', (sk.value / 10) + '%'); };
-function liveUi(){
-  const v = vidV(); if(!v) return;
-  const pp = $('lv-pp'), big = $('lv-big'), mu = $('lv-mu');
-  const ic = v.paused ? LV_I.play : LV_I.pause;
-  const mi = (v.muted || v.volume === 0) ? LV_I.mute : LV_I.vol;
-  if(pp && pp._i !== ic){ pp.innerHTML = ic; pp._i = ic; } if(big && big._i !== ic){ big.innerHTML = ic; big._i = ic; }
-  if(mu && mu._i !== mi){ mu.innerHTML = mi; mu._i = mi; }
-  const st = $('lv-stage'); if(st) st.classList.toggle('lv-paused', v.paused);
-}
-function liveTick(){
-  const v = vidV(), c = $('lv-chip'), t = $('lv-ct'); if(!v || !c || !t) return;
-  const r = liveRange(); if(!r) return;
-  const lag = r[1] - v.currentTime;
-  if(lag > 20){ c.classList.add('late'); t.textContent = 'GERİDE ' + lvFmt(lag); }
-  else { c.classList.remove('late'); t.textContent = 'CANLI'; }
-  const tm = $('lv-tm'), sk = $('lv-seek');
-  if(!window._lvDrag){
-    if(sk){ sk.value = Math.round(1000 * (v.currentTime - r[0]) / (r[1] - r[0])); lvPaint(sk); }
-    if(tm) tm.textContent = lag > 5 ? '-' + lvFmt(lag) : 'CANLI';
-    if(tm) tm.classList.toggle('late', lag > 5);
-  }
-  // Oynuyor görünüp ilerlemiyorsa (takılma): kısa süre bekle, sonra canlı kenara atla
-  if(!v.paused && !v.seeking && Math.abs(v.currentTime - window._lvLast) < 0.01){ window._lvStall++; if(window._lvStall === 16){ liveEdge(); window._lvStall = 0; } }
-  else window._lvStall = 0;
-  window._lvLast = v.currentTime;
-}
-function liveEdge(){ const v = vidV(); if(!v) return; try{ const r = liveRange(); if(r) v.currentTime = r[1] - 0.5; v.play().catch(() => {}); }catch(e){} }
-function liveToggle(){ const v = vidV(); if(!v) return; if(v.paused) v.play().catch(() => {}); else v.pause(); if(window.liveShow) liveShow(); }
-function liveSeek(dt){ const v = vidV(); if(!v) return; const r = liveRange(); if(!r) return; v.currentTime = Math.max(r[0], Math.min(r[1] - 0.5, v.currentTime + dt)); if(window.liveShow) liveShow(); }
-function liveMute(){ const v = vidV(); if(!v) return; v.muted = !v.muted; if(!v.muted && v.volume === 0) v.volume = 1; liveUi(); }
-// Tam ekran: tarayıcının tam ekran API'si ve ekran yönü kilidi KULLANILMAZ (ikisi de geçişte zıplama / yeniden çizim yapıyor).
-// Sahne (video + kendi kontrollerimiz) aynı anda, yalnızca CSS ile ekranı kaplar; girişte ve çıkışta birebir aynı davranır.
-// Telefon dikeyken sahne CSS ile 90° döndürülüp yatay doldurulur, telefon yatay olunca döndürme kendiliğinden kalkar.
-function liveFsOn(){ const st = $('lv-stage'); return !!(st && st.classList.contains('lv-pfs')); }
-function liveFull(on){
-  const st = $('lv-stage'); if(!st) return;
-  if(on === undefined) on = !liveFsOn();
-  st.classList.toggle('lv-pfs', on); st.classList.toggle('lv-fs', on);
-  document.body.classList.toggle('lv-pfs-on', on);
-  if(window.liveShow) liveShow();
 }
 const vidV = () => { const o = $('vm'); return o ? o.querySelector('video') : null; };
 function vidSeek(dt){ const v = vidV(); if(v) v.currentTime = Math.max(0, Math.min((v.duration || 1e9), v.currentTime + dt)); }
