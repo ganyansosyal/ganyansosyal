@@ -2,8 +2,8 @@
    Strateji: önce ağ (güncel dosya), yavaşsa/çevrimdışıysa önbellek.
    Firebase SDK dosyaları (sürüm numaralı) önbellekten sunulur.
    Firestore / Auth / diğer API istekleri ellenmez. */
-const CACHE = 'ganyansosyal-v4';
-const NET_TIMEOUT = 3000;
+const CACHE = 'ganyansosyal-v5';
+const NET_TIMEOUT = 6000;
 const SHELL = ['./', 'index.html', 'manifest.json', 'css/style.css',
   'icon-192.png', 'icon-512.png',
   'js/01-core-tjk.js','js/02-notifs.js','js/03-feed.js','js/04-betting.js','js/05-tabs.js',
