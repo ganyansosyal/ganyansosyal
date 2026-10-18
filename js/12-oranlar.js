@@ -2,7 +2,8 @@
 // Worker adresi: Cloudflare'de açtığın oran kaydedici worker'ın adresi (sonunda / olmasın)
 const ORAN_WORKER = 'https://ganyan-oran.bilyoncu001.workers.dev';
 
-const ORN = { city: '', race: 0, gun: '', data: null, at: 0, err: '', busy: false, timer: null };
+const ORN = { city: '', race: 0, gun: '', data: null, at: 0, err: '', busy: false, timer: null, acik: {}, tum: {} };
+const ORN_LIM = 8;   // açık atta ilk gösterilen kayıt sayısı
 
 const ornFmt = x => String(Math.round(x * 10) / 10).replace('.', ',');   // 5.6 → "5,6", 5 → "5"
 const ornSaat = ts => { const d = new Date(ts); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
@@ -21,36 +22,61 @@ async function ornYukle(zorla){
   if(ORN.busy) return;
   if(!zorla && ORN.at && Date.now() - ORN.at < 60000 && (ORN.gun === viewIso || ORN.err)) return;
   ORN.busy = true;
+  let degisti = true;
   try{
-    const r = await fetch(ORAN_WORKER + '/oran?gun=' + encodeURIComponent(viewIso), { cache: 'no-store' });
+    const ac = new AbortController();
+    const to = setTimeout(() => ac.abort(), 10000);
+    let r;
+    try{ r = await fetch(ORAN_WORKER + '/oran?gun=' + encodeURIComponent(viewIso), { cache: 'no-store', signal: ac.signal }); }
+    finally{ clearTimeout(to); }
     if(!r.ok) throw new Error('HTTP ' + r.status);
-    ORN.data = await r.json(); ORN.gun = viewIso; ORN.at = Date.now(); ORN.err = '';
-  }catch(e){ ORN.err = String((e && e.message) || e); ORN.at = Date.now(); }
+    const yeni = await r.json();
+    const sig = JSON.stringify(yeni);
+    // Veri ve durum aynıysa ekranı yeniden çizme (titreme/zıplama olmasın)
+    degisti = !(ORN.data && ORN.sig === sig && !ORN.err && ORN.gun === viewIso);
+    ORN.data = yeni; ORN.sig = sig; ORN.gun = viewIso; ORN.at = Date.now(); ORN.err = '';
+  }catch(e){
+    const msg = String((e && e.message) || e);
+    degisti = ORN.err !== msg;
+    ORN.err = msg; ORN.at = Date.now();
+  }
   ORN.busy = false;
-  if(visible() === 'oranlar') renderOranlar(true);
+  if(degisti && visible() === 'oranlar') renderOranlar(true);
 }
 
-function ornSatir(isim, no, seri){
-  // seri: [{t, o:{atNo: oran}}] zaman sıralı → bu atın oranları
+function ornSatir(isim, no, seri, key){
+  // Bu atın oranları, art arda aynı olanlar tek sayılır
   const pts = [];
-  seri.forEach(s => { const v = s.o[String(no)]; if(v > 0) pts.push({ t: s.t, v }); });
+  seri.forEach(s => { const v = s.o[String(no)]; if(v > 0 && (!pts.length || pts[pts.length - 1].v !== v)) pts.push({ t: s.t, v }); });
   if(!pts.length) return '';
-  const ilk = pts[0].v, son = pts[pts.length - 1].v, onceki = pts.length > 1 ? pts[pts.length - 2].v : son;
-  const yon = son < onceki ? 'dn' : son > onceki ? 'up' : '';
-  const ok = yon === 'dn' ? '↓' : yon === 'up' ? '↑' : '';
-  const fark = son - ilk, farkTx = Math.abs(fark) < 0.05 ? '' : (fark < 0 ? '−' : '+') + ornFmt(Math.abs(fark));
-  // Çok uzarsa: açılış + son 5 oran
-  let g = pts;
-  let kisa = false;
-  if(pts.length > 7){ g = [pts[0]].concat(pts.slice(-5)); kisa = true; }
-  const zincir = g.map((p, i) => `<span class="orn-v${i === g.length - 1 ? ' son' : ''}" title="${ornSaat(p.t)}">${ornFmt(p.v)}</span>`);
-  if(kisa) zincir.splice(1, 0, '<span class="orn-dot">…</span>');
-  return `<div class="orn-r">
-    <div class="orn-n">${esc(String(no))}</div>
-    <div class="orn-m"><b>${esc(isim || '')}</b>
-      <div class="orn-z">${zincir.join('<i>→</i>')}</div></div>
-    <div class="orn-s ${yon}"><b>${ornFmt(son)} ${ok}</b>${farkTx ? `<small>${farkTx}</small>` : ''}</div>
+  const acik = !!ORN.acik[key];
+  let det = '';
+  if(acik){
+    const r = pts.slice().reverse();
+    const g = ORN.tum[key] ? r : r.slice(0, ORN_LIM);
+    det = '<div class="orn-det">' + g.map(p => `<div class="orn-d"><span>${ornSaat(p.t)}</span><b>${ornFmt(p.v)}</b></div>`).join('');
+    if(!ORN.tum[key] && r.length > ORN_LIM) det += `<div class="orn-more" onclick="ornTum(this)">Tümünü göster (${r.length - ORN_LIM} kayıt daha)</div>`;
+    det += '</div>';
+  }
+  return `<div class="orn-it${acik ? ' o' : ''}" data-k="${esc(key)}">
+    <div class="orn-row" onclick="ornAc(this)">
+      <div class="orn-n">${esc(String(no))}</div>
+      <div class="orn-ad">${esc(isim || '')}<span class="orn-cnt">${pts.length} kayıt</span></div>
+      <div class="orn-num orn-ilk">${ornFmt(pts[0].v)}</div>
+      <div class="orn-num orn-son">${ornFmt(pts[pts.length - 1].v)}</div>
+    </div>${det}
   </div>`;
+}
+
+function ornAc(el){
+  const k = el.closest('.orn-it').dataset.k;
+  ORN.acik[k] = !ORN.acik[k];
+  renderOranlar(true);
+}
+function ornTum(el){
+  const k = el.closest('.orn-it').dataset.k;
+  ORN.tum[k] = true;
+  renderOranlar(true);
 }
 
 function renderOranlar(sessiz){
@@ -80,11 +106,15 @@ function renderOranlar(sessiz){
     const seri = onek ? (ORN.data[onek + '-' + ORN.race] || []) : [];
     if(!seri.length) govde = '<div class="empty">Bu koşu için henüz kayıtlı oran yok.<br><small>Oranlar 5 dakikada bir kaydedilir.</small></div>';
     else {
-      const satirlar = (k.atlar || []).filter(a => !a.kosmaz).map(a => ornSatir(a.isim, a.no, seri)).join('');
+      const satirlar = (k.atlar || []).filter(a => !a.kosmaz).map(a => ornSatir(a.isim, a.no, seri, ORN.city + '|' + ORN.race + '|' + a.no)).join('');
       const son = seri[seri.length - 1].t;
-      govde = `<div class="orn-bilgi">${seri.length} kayıt · son ${ornSaat(son)}</div><div class="orn-list">${satirlar || '<div class="empty">At bulunamadı.</div>'}</div>`;
+      govde = `<div class="orn-bilgi">${seri.length} kayıt · son ${ornSaat(son)}</div><div class="orn-list"><div class="orn-hd"><span>No</span><span>At</span><span>Açılış</span><span>Son</span></div>${satirlar || '<div class="empty">At bulunamadı.</div>'}</div>`;
     }
   }
+  // Yeniden çizmeden önce kaydırma konumlarını sakla
+  const kaydirTut = [...box.querySelectorAll('.orn-chips')].map(e => e.scrollLeft);
+  const ustler = []; for(let el = box; el; el = el.parentElement){ if(el.scrollTop > 0) ustler.push([el, el.scrollTop]); }
+  const penY = window.scrollY;
   box.innerHTML = `<div class="ru-t">Oranlar</div>
     <div class="ru-s">Ganyan oranlarının açılıştan bu yana değişimi. Uygulama kapalıyken de 5 dakikada bir kaydedilir.</div>
     <div class="orn-chips">${cip}</div>
@@ -92,6 +122,10 @@ function renderOranlar(sessiz){
     ${k && k.saat ? `<div class="orn-saat">${esc(ORN.city)} · ${+k.no}. Koşu · ${esc(String(k.saat))}${ORN.err && ORN.data ? ' · <span class="orn-hata">yenilenemedi</span>' : ''}</div>` : ''}
     ${govde}
     <button class="orn-yenile" onclick="ornYukle(true)">Yenile</button>`;
+  // Kaydırma konumlarını geri yükle
+  box.querySelectorAll('.orn-chips').forEach((e, i) => { e.scrollLeft = kaydirTut[i] || 0; });
+  ustler.forEach(([el, y]) => { el.scrollTop = y; });
+  if(window.scrollY !== penY) window.scrollTo(0, penY);
   // Açıkken dakikada bir kendini yeniler
   clearTimeout(ORN.timer);
   ORN.timer = setTimeout(() => { if(visible() === 'oranlar') ornYukle(true); }, 60000);
