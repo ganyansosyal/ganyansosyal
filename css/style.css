@@ -3097,3 +3097,12 @@ body.lv-pfs-on{overflow:hidden}
 @keyframes lvpulse{50%{opacity:.35}}
 .vm-live .vm-x{background:var(--ac);color:var(--on)}
 .vm-live .vm-x:active{filter:brightness(.85)}
+
+/* ===== Bülten yükleme çubuğu ===== */
+.ld-card{margin:28px 4px 0;padding:22px 18px 20px;border-radius:22px;background:var(--sf);border:1px solid color-mix(in srgb,var(--ac) 22%,var(--ln));box-shadow:0 10px 30px color-mix(in srgb,var(--ac) 10%,transparent);text-align:center}
+.ld-ico{width:48px;height:48px;margin:0 auto 12px;border-radius:16px;display:grid;place-items:center;font-size:24px;background:color-mix(in srgb,var(--ac) 14%,var(--sf))}
+.ld-t{font-weight:800;font-size:16px;color:var(--tx);letter-spacing:-.2px}
+.ld-s{margin-top:2px;font-size:12px;font-weight:600;color:var(--mu)}
+.ld-bar{margin-top:16px;height:10px;border-radius:99px;overflow:hidden;background:color-mix(in srgb,var(--ac) 14%,var(--sf))}
+.ld-bar i{display:block;height:100%;width:8%;border-radius:99px;background:linear-gradient(90deg,var(--ac),color-mix(in srgb,var(--ac) 55%,#7CF2C4));transition:width 9s cubic-bezier(.1,.7,.2,1)}
+.ld-bar.go i{width:92%}
