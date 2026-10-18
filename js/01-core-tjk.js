@@ -572,9 +572,13 @@ function parseAtTablosu(tablo) {
       hc.querySelectorAll('*').forEach(e => Array.from(e.attributes || []).forEach(at => par.push(at.value)));
       Array.from(hc.attributes || []).forEach(at => par.push(at.value));
       const tumu = par.join(' ');
-      const mk = /KosuKodu=(\d+)/i.exec(tumu), ma = /Atkodu=(\d+)/i.exec(tumu);
+      let mk = /KosuKodu=(\d+)/i.exec(tumu), ma = /Atkodu=(\d+)/i.exec(tumu);
+      for (const el of [hc].concat(Array.from(hc.querySelectorAll('*')))) {   // KosuKodu ve Atkodu aynı bağlantıdan alınsın
+        const s1 = Array.from(el.attributes || []).map(at => at.value).join(' '), k1 = /KosuKodu=(\d+)/i.exec(s1), a1 = /Atkodu=(\d+)/i.exec(s1);
+        if (k1 && a1) { mk = k1; ma = a1; break; }
+      }
       if (mk && ma) {
-        const ln = Array.from(hc.querySelectorAll('a[href]')).find(x => /KosuKodu=/i.test(x.getAttribute('href') || ''));
+        const ln = Array.from(hc.querySelectorAll('a[href]')).find(x => (x.getAttribute('href') || '').indexOf('Atkodu=' + ma[1]) >= 0 && (x.getAttribute('href') || '').indexOf('KosuKodu=' + mk[1]) >= 0);
         let hh = ''; try { if (ln) hh = new URL(ln.getAttribute('href'), 'https://www.tjk.org/').href; } catch (e) {}
         idmUrl = { k: mk[1], a: ma[1], h: hh };
       }
@@ -841,7 +845,7 @@ async function sehirProgramiGetir(sehirId, sehirAdi, tarihIso) {
   }
   return kosular.filter(k => k.atlar && k.atlar.length).map(k => ({
     no: k.no, saat: k.saat, mesafe: k.mesafe || null, pist: k.pist || null, sinif: String(k.sinifMetni || '').slice(0, 320), bilgi: k.bilgiTam || '', baslar: ayakBas[+k.no] || [], oyun: oyunKos[+k.no] || null,
-    atlar: k.atlar.map(a => ({ atId: a.atId || null, kosmaz: !!a.kosmaz, no: a.no, isim: a.isim, jokey: a.jokey || '', agf: a.agfYuzde, siklet: a.siklet, yas: a.yas, gny: a.gny, son6: a.son6 || [], ap: !!a.jokeyAp, fazla: a.fazla || null, orijin: a.orijin || null, sahip: a.sahip || null, antrenor: a.antrenor || null, s20: a.s20 || null, st: a.st || null, hp: a.hp || null, kgs: a.kgs || null, eid: a.enIyiDereceHam || null, taki: a.taki || null, takiAciklama: a.takiAciklama || null, takiDetay: a.takiDetay || [], takiHam: a.takiHam || '' }))
+    atlar: k.atlar.map(a => ({ idm: a.idm || null, atId: a.atId || null, kosmaz: !!a.kosmaz, no: a.no, isim: a.isim, jokey: a.jokey || '', agf: a.agfYuzde, siklet: a.siklet, yas: a.yas, gny: a.gny, son6: a.son6 || [], ap: !!a.jokeyAp, fazla: a.fazla || null, orijin: a.orijin || null, sahip: a.sahip || null, antrenor: a.antrenor || null, s20: a.s20 || null, st: a.st || null, hp: a.hp || null, kgs: a.kgs || null, eid: a.enIyiDereceHam || null, taki: a.taki || null, takiAciklama: a.takiAciklama || null, takiDetay: a.takiDetay || [], takiHam: a.takiHam || '' }))
   }));
 }
 
@@ -1944,9 +1948,8 @@ function showToast(m){
   const harita = () => { const iso = (typeof viewIso === 'string' && viewIso) || 'x'; return (window.__idm || {})[iso] || null; };
   // Kök içindeki "S20" etiketini bulur; istatistik tablosunun hemen altına satırı koyar
   function isle(kok){
-    const H = harita(); if(!H) return;
-    const adlar = Object.keys(H).sort((a, b) => b.length - a.length);
-    if(!adlar.length || !kok || kok.nodeType !== 1) return;
+    if(!kok || kok.nodeType !== 1) return;
+    const H = harita() || {};
     const w = document.createTreeWalker(kok, NodeFilter.SHOW_TEXT);
     let n;
     while((n = w.nextNode())){
@@ -1954,16 +1957,19 @@ function showToast(m){
       let grid = n.parentElement, g = 0;
       while(grid && g < 6){ const t = grid.textContent || ''; if(/Kulvar/.test(t) && /Yaş/.test(t)) break; grid = grid.parentElement; g++; }
       if(!grid || g >= 6) continue;
-      let kart = grid.parentElement, ad = null, s = 0;
-      while(kart && s < 8){
-        const tx = (kart.textContent || '').toLocaleUpperCase('tr');
-        ad = adlar.find(x => tx.includes(x));
-        if(ad) break;
-        kart = kart.parentElement; s++;
-      }
-      if(!ad || kart.querySelector('.idm-row')) continue;
+      // At, kartın metninde isim aranarak değil, kendi satırının (.hr) numarası ve adıyla bulunur (ekürü gibi başka at adlarıyla karışmasın)
+      const hr = grid.closest('.hr'); if(!hr || hr.querySelector('.idm-row')) continue;
+      const adEl = hr.querySelector('.hn b'); if(!adEl) continue;
+      const ad = (adEl.textContent || '').trim();
+      let e;
+      try {
+        const h = horsesFor(city, race).find(x => x.no === parseInt(hr.dataset.no, 10));
+        if(h && h.name === ad && h.d && h.d.idm !== undefined) e = h.d.idm;   // TJK bülteninde bu atın satırından okunan kayıt
+      } catch (err) {}
+      if(e === undefined) e = H[ad.toLocaleUpperCase('tr')];   // eski önbellek: isimle birebir eşleşme
+      if(!e) continue;
       const d = document.createElement('div');
-      d.className = 'idm-row'; d.setAttribute('data-k', H[ad].k); d.setAttribute('data-a', H[ad].a); d.setAttribute('data-h', H[ad].h || ''); d.setAttribute('data-n', ad);
+      d.className = 'idm-row'; d.setAttribute('data-k', e.k); d.setAttribute('data-a', e.a); d.setAttribute('data-h', e.h || ''); d.setAttribute('data-n', ad);
       d.innerHTML = '<span class="idm-pl">▶</span><span class="idm-tx"><b>İdman videosunu izle</b></span><span class="idm-ok">İzle ›</span>';
       grid.after(d);
     }
@@ -1994,7 +2000,7 @@ function showToast(m){
     const sayfa = href || ('https://www.tjk.org/TR/yarissever/Info/idmanpisti/Kosu?KosuKodu=' + encodeURIComponent(k) + '&Atkodu=' + encodeURIComponent(a));
     const o = document.createElement('div'); o.id = 'vm'; o.className = 'vm vm-wide';
     o.innerHTML = '<div class="vm-s" role="dialog" aria-modal="true">' +
-      '<div class="vm-h"><span class="vm-ch">▶</span><div class="vm-t">' + esc(ad) + '<small>İdman görüntüsü</small></div>' +
+      '<div class="vm-h"><span class="vm-ch">▶</span><div class="vm-t">' + esc(ad) + '<small>İdman görüntüsü · ' + esc(k + '-' + a) + '</small></div>' +
       '<button type="button" class="vm-x" aria-label="Kapat" onclick="vidCloseModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>' +
       '<video controls playsinline preload="metadata" controlsList="nodownload" style="display:none"></video>' +
       '<div class="idm-err" style="color:#cbd5e1;padding:18px 14px;font-weight:700">Video aranıyor…</div>' +
