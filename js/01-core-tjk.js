@@ -574,9 +574,17 @@ function parseAtTablosu(tablo) {
       const tumu = par.join(' ');
       const mk = /KosuKodu=(\d+)/i.exec(tumu), ma = /Atkodu=(\d+)/i.exec(tumu);
       if (mk && ma) {
-        idmUrl = { k: mk[1], a: ma[1] };
-        if (isim) { (window.__idm = window.__idm || {})[String(isim).toLocaleUpperCase('tr').trim()] = idmUrl; }
+        const ln = Array.from(hc.querySelectorAll('a[href]')).find(x => /KosuKodu=/i.test(x.getAttribute('href') || ''));
+        let hh = ''; try { if (ln) hh = new URL(ln.getAttribute('href'), 'https://www.tjk.org/').href; } catch (e) {}
+        idmUrl = { k: mk[1], a: ma[1], h: hh };
       }
+    }
+    if (isim) {
+      const iso = (typeof viewIso === 'string' && viewIso) || 'x', ad = String(isim).toLocaleUpperCase('tr').trim();
+      const M = (window.__idm = window.__idm || {}), MI = (M[iso] = M[iso] || {});
+      if (idmUrl) MI[ad] = idmUrl; else delete MI[ad];
+      clearTimeout(window.__idmSv);
+      window.__idmSv = setTimeout(() => { try { const ks = Object.keys(M).sort().slice(-3), o = {}; ks.forEach(x => o[x] = M[x]); localStorage.setItem('gs_idmmap', JSON.stringify(o)); } catch (e) {} }, 600);
     }
 
     atlar.push({
@@ -1931,38 +1939,44 @@ function showToast(m){
 
 /* ===== İdman videosu satırı: "Detay" içinde, istatistik tablosunun altına ===== */
 (function(){
-  const ANK = [/^En iyi derece/i, /^Son galibiyet/i, /^Son galop/i];
-  function ekle(){
-    const harita = window.__idm; if(!harita) return;
-    const adlar = Object.keys(harita).sort((a, b) => b.length - a.length);
-    if(!adlar.length) return;
-    const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    const adaylar = []; let n;
+  // Kaydedilmiş harita (sayfa açılır açılmaz satır hazır olsun, sonradan zıplamasın)
+  try { const s = JSON.parse(localStorage.getItem('gs_idmmap') || '{}'); window.__idm = Object.assign(s, window.__idm || {}); } catch (e) { window.__idm = window.__idm || {}; }
+  const harita = () => { const iso = (typeof viewIso === 'string' && viewIso) || 'x'; return (window.__idm || {})[iso] || null; };
+  // Kök içindeki "S20" etiketini bulur; istatistik tablosunun hemen altına satırı koyar
+  function isle(kok){
+    const H = harita(); if(!H) return;
+    const adlar = Object.keys(H).sort((a, b) => b.length - a.length);
+    if(!adlar.length || !kok || kok.nodeType !== 1) return;
+    const w = document.createTreeWalker(kok, NodeFilter.SHOW_TEXT);
+    let n;
     while((n = w.nextNode())){
-      const t = (n.nodeValue || '').trim();
-      if(t.length < 40 && ANK.some(r => r.test(t)) && n.parentElement) adaylar.push(n.parentElement);
-    }
-    const yapildi = new Set();
-    adaylar.forEach(el => {
-      let kap = el.parentElement, kutu = el, g = 0;
-      while(kap && g < 8 && !/Orijin/i.test(kap.textContent || '')){ kutu = kap; kap = kap.parentElement; g++; }
-      if(!kap) return;
-      let kart = kap, ad = null, s = 0;
+      if((n.nodeValue || '').trim() !== 'S20' || !n.parentElement) continue;
+      let grid = n.parentElement, g = 0;
+      while(grid && g < 6){ const t = grid.textContent || ''; if(/Kulvar/.test(t) && /Yaş/.test(t)) break; grid = grid.parentElement; g++; }
+      if(!grid || g >= 6) continue;
+      let kart = grid.parentElement, ad = null, s = 0;
       while(kart && s < 8){
         const tx = (kart.textContent || '').toLocaleUpperCase('tr');
         ad = adlar.find(x => tx.includes(x));
         if(ad) break;
         kart = kart.parentElement; s++;
       }
-      if(!ad || kart.querySelector('.idm-row') || yapildi.has(kart)) return;
-      yapildi.add(kart);
+      if(!ad || kart.querySelector('.idm-row')) continue;
       const d = document.createElement('div');
-      d.className = 'idm-row'; d.setAttribute('data-k', harita[ad].k); d.setAttribute('data-a', harita[ad].a); d.setAttribute('data-n', ad);
+      d.className = 'idm-row'; d.setAttribute('data-k', H[ad].k); d.setAttribute('data-a', H[ad].a); d.setAttribute('data-h', H[ad].h || ''); d.setAttribute('data-n', ad);
       d.innerHTML = '<span class="idm-pl">▶</span><span class="idm-tx"><b>İdman videosunu izle</b></span><span class="idm-ok">İzle ›</span>';
-      kap.insertBefore(d, kutu);
-    });
+      grid.after(d);
+    }
   }
-  new MutationObserver(() => { clearTimeout(ekle.h); ekle.h = setTimeout(ekle, 200); }).observe(document.body, { childList:true, subtree:true });
+  // Gözlemci geri çağrısı boyamadan önce çalışır: kart yeniden çizilse bile satır aynı karede geri konur (titreme yok)
+  new MutationObserver(muts => {
+    const hedef = [];
+    muts.forEach(m => m.addedNodes.forEach(x => { if(x.nodeType === 1 && !(x.classList && x.classList.contains('idm-row'))) hedef.push(x); }));
+    hedef.forEach(isle);
+  }).observe(document.body, { childList: true, subtree: true });
+  // Güvenlik: ilk açılış ve veri sonradan geldiyse (DOM değişmeden) eksik kalanları tamamla
+  isle(document.body);
+  setInterval(() => isle(document.body), 2500);
 
   // Aday adresler: görüntülenen tarihin ayı, bir önceki ve bir sonraki ay (ay başı/sonu idmanları için)
   function adresler(k, a){
@@ -1971,15 +1985,19 @@ function showToast(m){
     const f = (yy, mm) => { if(mm < 1){ mm = 12; yy--; } if(mm > 12){ mm = 1; yy++; } return 'https://video-cdn.tjk.org/videoftp/idmanpisti/' + yy + '/' + String(mm).padStart(2, '0') + '/' + k + '-' + a + '.mp4'; };
     return [f(y, m), f(y, m - 1), f(y, m + 1)];
   }
-  function idmAc(k, a, ad){
+  // Bulunan mp4 adresleri gün bazında saklanır (koşu videolarındaki gs_mp4_<tarih> gibi)
+  const onbKey = () => 'gs_idm_' + ((typeof viewIso === 'string' && viewIso) || 'x');
+  const onbOku = id => { try { return (JSON.parse(localStorage.getItem(onbKey()) || '{}'))[id] || ''; } catch (e) { return ''; } };
+  const onbYaz = (id, u) => { try { const o = JSON.parse(localStorage.getItem(onbKey()) || '{}'); o[id] = u; localStorage.setItem(onbKey(), JSON.stringify(o)); } catch (e) {} };
+  function idmAc(k, a, ad, href){
     vidCloseModal(true);
-    const c = adresler(k, a); let i = 0;
+    const sayfa = href || ('https://www.tjk.org/TR/yarissever/Info/idmanpisti/Kosu?KosuKodu=' + encodeURIComponent(k) + '&Atkodu=' + encodeURIComponent(a));
     const o = document.createElement('div'); o.id = 'vm'; o.className = 'vm vm-wide';
     o.innerHTML = '<div class="vm-s" role="dialog" aria-modal="true">' +
       '<div class="vm-h"><span class="vm-ch">▶</span><div class="vm-t">' + esc(ad) + '<small>İdman görüntüsü</small></div>' +
       '<button type="button" class="vm-x" aria-label="Kapat" onclick="vidCloseModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>' +
-      '<video controls playsinline autoplay preload="metadata" controlsList="nodownload" src="' + c[0] + '"></video>' +
-      '<div class="idm-err" style="display:none;color:#fca5a5;padding:12px 14px;font-weight:600">İdman videosu bulunamadı.</div>' +
+      '<video controls playsinline preload="metadata" controlsList="nodownload" style="display:none"></video>' +
+      '<div class="idm-err" style="color:#cbd5e1;padding:18px 14px;font-weight:700">Video aranıyor…</div>' +
       '<div class="vm-b" style="padding:10px 12px">' +
       '<button type="button" onclick="vidSeek(-10)">↺ 10</button><button type="button" onclick="vidSeek(10)">10 ↻</button><span class="sp"></span>' +
       '<div class="vm-seg"><button type="button" onclick="vidSpeed(this,0.5)">0.5x</button><button type="button" class="on" onclick="vidSpeed(this,1)">1x</button><button type="button" onclick="vidSpeed(this,2)">2x</button></div>' +
@@ -1989,15 +2007,37 @@ function showToast(m){
     document.body.appendChild(o);
     document.body.style.overflow = 'hidden';
     if(!_vmH){ try{ history.pushState({vm: 1}, ''); _vmH = true; }catch(e){} }
-    const v = o.querySelector('video');
-    v.addEventListener('error', () => {
-      i++;
-      if(i < c.length){ v.src = c[i]; v.play().catch(() => {}); }
-      else { v.style.display = 'none'; o.querySelector('.idm-err').style.display = 'block'; }
-    });
+    const v = o.querySelector('video'), msg = o.querySelector('.idm-err');
+    const esc2 = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const oynat = u => { if(!document.body.contains(o)) return; msg.style.display = 'none'; v.style.display = 'block'; v.src = u; v.play().catch(() => {}); };
+    (async () => {
+      let hata = '', bulunan = onbOku(k + '-' + a);
+      // 1) TJK'nın idman sayfasını okuyup mp4 adresini oradan al (koşu videosuyla aynı yöntem)
+      if(!bulunan) try {
+        window.__tjkFresh = true;
+        let html = '';
+        try { html = await TJK.fetchHtml(sayfa); } finally { window.__tjkFresh = false; }
+        const m = html.match(/(?:https?:)?\/\/video-cdn\.tjk\.org\/videoftp\/[^"'\s<>\\]+?\.mp4/i) || html.match(/videoftp\/\d{4}\/\d{2}\/[\w-]+\.mp4/i);
+        if(m){ let u = m[0]; if(u.indexOf('//') === 0) u = 'https:' + u; else if(!/^https?:/i.test(u)) u = 'https://video-cdn.tjk.org/' + u; bulunan = u; }
+        else hata = 'sayfada mp4 yok (' + html.length + ' bayt)';
+      } catch (e) { hata = (e && e.message) ? e.message : String(e); }
+      if(bulunan){
+        onbYaz(k + '-' + a, bulunan);
+        v.addEventListener('error', () => { try { const o = JSON.parse(localStorage.getItem(onbKey()) || '{}'); delete o[k + '-' + a]; localStorage.setItem(onbKey(), JSON.stringify(o)); } catch (e) {} msg.style.display = 'block'; v.style.display = 'none'; msg.innerHTML = 'Video yüklenemedi.<br><small style="font-weight:500;opacity:.8;word-break:break-all">' + esc2(bulunan) + '</small>'; }, { once: true });
+        return oynat(bulunan);
+      }
+      // 2) Sayfa okunamadıysa: adresi tarihten tahmin ederek dene
+      const c = adresler(k, a); let i = 0;
+      v.addEventListener('error', () => {
+        i++;
+        if(i < c.length){ v.src = c[i]; v.play().catch(() => {}); }
+        else { v.style.display = 'none'; msg.style.display = 'block'; msg.innerHTML = 'İdman videosu bulunamadı.<br><small style="font-weight:500;opacity:.8;word-break:break-all">Neden: ' + esc2(hata) + '<br>Sayfa: ' + esc2(sayfa) + '<br>Denenen: ' + esc2(c.join(' | ')) + '</small>'; }
+      });
+      oynat(c[0]);
+    })();
   }
   document.addEventListener('click', e => {
     const r = e.target.closest && e.target.closest('.idm-row'); if(!r) return;
-    idmAc(r.getAttribute('data-k'), r.getAttribute('data-a'), r.getAttribute('data-n') || '');
+    idmAc(r.getAttribute('data-k'), r.getAttribute('data-a'), r.getAttribute('data-n') || '', r.getAttribute('data-h') || '');
   });
 })();
