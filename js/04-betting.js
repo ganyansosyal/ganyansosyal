@@ -257,7 +257,7 @@ function takiChips(d){
 // ---- Son galibiyet + son galop (at sayfalarından, cihazda 12 saat saklanır) ----
 const GALIP_TTL = 12 * 3600 * 1000;
 const GL = {
-  yar: { key: 'gs_yaris_v2', label: 'Son yarış', none: 'Yarış kaydı yok', fn: 'atSonYaris', cls: 'hgal hyar' },
+  yar: { key: 'gs_yaris_v3', label: 'Son yarış', none: 'Yarış kaydı yok', fn: 'atSonYaris', cls: 'hgal hyar' },
   gal: { key: 'gs_galip_v5', label: 'Son galibiyet', none: 'Kayıtlı galibiyeti yok', fn: 'atSonGalibiyet', cls: 'hgal' },
   gop: { key: 'gs_galop_v2', label: 'Son galop', none: 'İdman kaydı yok', fn: 'atSonGalop', cls: 'hgal hgop' }
 };

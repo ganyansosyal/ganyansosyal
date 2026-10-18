@@ -1261,7 +1261,7 @@ async function atSonYaris(atId) {
       if (!/^\d{1,2}[.\/]\d{1,2}[.\/]\d{4}$/.test(g(iT))) continue;   // veri satırı değilse atla
       const pist = (g(iP) || (iM >= 0 && td[iM] ? (td[iM].querySelector('[title],img[alt]') || {}).title || '' : '')).replace(/^K$/i, 'Kum').replace(/^[ÇC]$/i, 'Çim').replace(/^S$/i, 'Sentetik');
       const msf = g(iM).replace(/[^\d]/g, '');
-      const sonuc = { t: g(iT), d: [pist, msf ? msf + 'm' : ''].filter(Boolean).join(' · '), y: [g(iH), g(iT)].filter(Boolean).join(' · '), no: g(iSt).replace(/[^\d]/g, ''), sh: g(iH), kn: (parseInt(g(iK)) || '') };
+      const sonuc = { t: g(iT), d: [pist, msf ? msf + 'm' : ''].filter(Boolean).join(' · '), y: [g(iH), g(iT)].filter(Boolean).join(' · '), st: g(iSt).replace(/[^\d]/g, ''), no: '', sh: g(iH), kn: (parseInt(g(iK)) || '') };   // St = başlangıç kapısı (at numarası değil)
       try {
         const rh = rows[i].innerHTML.replace(/&amp;/g, '&');
         const mp = rh.match(/(?:https?:)?\/\/video-cdn\.tjk\.org\/videoftp\/[^"'\s<>\\]+?\.mp4/i);
@@ -1277,6 +1277,14 @@ async function atSonYaris(atId) {
         }
         if (v) sonuc.v = v;
       } catch (e) {}
+      // At numarası profil tablosunda yok: koşunun sonuç sayfasında aynı kapıdaki (St) atın numarasını bul. Olmazsa rozet gösterilmez.
+      if (sonuc.st && sonuc.sh && sonuc.kn) {
+        try {
+          const l = await Promise.race([kosuIlk4(sonuc.sh, sonuc.t, sonuc.kn), new Promise(r => setTimeout(() => r(null), 9000))]);
+          const x = l && l.find(r => r.st && r.st === +sonuc.st);
+          if (x && x.no) sonuc.no = String(x.no);
+        } catch (e) {}
+      }
       return sonuc;
     }
     return { n: 1 };
@@ -1288,7 +1296,7 @@ async function atSonYaris(atId) {
 async function kosuIlk4(sehirAdi, tarih, kosuNo) {
   const m = /^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/.exec(tarih || ''); if (!m || !kosuNo) return null;
   const iso = m[3] + '-' + String(m[2]).padStart(2, '0') + '-' + String(m[1]).padStart(2, '0');
-  const ck = 'gs_ilk4_v3', key = turkceNormalizeAnahtar(sehirAdi) + '|' + iso + '|' + kosuNo;
+  const ck = 'gs_ilk4_v4', key = turkceNormalizeAnahtar(sehirAdi) + '|' + iso + '|' + kosuNo;
   let depo = {}; try { depo = JSON.parse(localStorage.getItem(ck) || '{}') || {}; } catch (e) {}
   if (depo[key] && Date.now() - depo[key].ts < 30 * 86400000) return depo[key].v;
   const ls = await sehirleriGetir(iso);
@@ -1313,6 +1321,7 @@ async function kosuIlk4(sehirAdi, tarih, kosuNo) {
     const iIsim = bas.findIndex(h => /At\s*İsmi/i.test(h));
     const iGny = bas.findIndex(h => /^Gny$/i.test(h));
     const iNo = bas.findIndex((h, i) => i !== iS && /^(At\s*No|No|Nu|Numara|Forma)$/i.test(h));
+    const iStR = bas.findIndex(h => /^St$/i.test(h));   // başlangıç kapısı: atın profilindeki St ile eşleştirmek için
     const out = [];
     trs.slice(bi + 1).forEach(tr => {
       const td = tr.querySelectorAll('td'); if (td.length <= Math.max(iS, iIsim)) return;
@@ -1331,7 +1340,7 @@ async function kosuIlk4(sehirAdi, tarih, kosuNo) {
       const ad = ham.replace(/\(\s*\d{1,2}\s*\)/g, ' ').replace(/\s*\([A-Z]{2,4}\)\s*$/, '').replace(/\s+/g, ' ').trim();
       const cellNo = x => x >= 0 && td[x] ? parseInt(td[x].textContent) || 0 : 0;
       const g = iGny >= 0 && td[iGny] ? norm(td[iGny].textContent) : '';
-      out.push({ sr, no: (mN ? +mN[1] : 0) || cellNo(iNo), ad,   // at numarası: isimdeki (7); St sütunu başlangıç kapısıdır, kullanılmaz
+      out.push({ sr, no: (mN ? +mN[1] : 0) || cellNo(iNo), st: cellNo(iStR), ad,   // at numarası: isimdeki (7); St sütunu başlangıç kapısıdır, kullanılmaz
          g: /^\d+[.,]\d+$/.test(g) ? g : '' });
     });
     out.sort((a, b) => a.sr - b.sr);
