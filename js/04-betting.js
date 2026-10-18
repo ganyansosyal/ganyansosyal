@@ -257,6 +257,7 @@ function takiChips(d){
 // ---- Son galibiyet + son galop (at sayfalarından, cihazda 12 saat saklanır) ----
 const GALIP_TTL = 12 * 3600 * 1000;
 const GL = {
+  yar: { key: 'gs_yaris_v1', label: 'Son yarış', none: 'Yarış kaydı yok', fn: 'atSonYaris', cls: 'hgal hyar' },
   gal: { key: 'gs_galip_v3', label: 'Son galibiyet', none: 'Kayıtlı galibiyeti yok', fn: 'atSonGalibiyet', cls: 'hgal' },
   gop: { key: 'gs_galop_v2', label: 'Son galop', none: 'İdman kaydı yok', fn: 'atSonGalop', cls: 'hgal hgop' }
 };
@@ -282,10 +283,11 @@ function galipInner(k, id){
   if(g.n) return `<div><small>${o.label}</small><b class="gm">${o.none}</b></div>`;
   const gun = galipGun(g.t);
   const yy = g.y ? `<span>${esc(g.y)}</span>` : '';
-  const vb = k === 'gal' && g.v ? `<button type="button" class="gal-vid" data-v="${esc(g.v)}" data-t="${esc(g.t)}">Videoyu izle</button>` : '';
-  return `<div><small>${o.label}${gun ? ' · ' + esc(gun) : ''}</small><b>${esc(g.t)}${g.d ? ' · ' + esc(g.d) : ''}</b></div>${vb ? `<div class="gal-r">${yy}${vb}</div>` : yy}`;
+  const vb = (k === 'gal' || k === 'yar') && g.v ? `<button type="button" class="gal-vid" data-v="${esc(g.v)}" data-t="${esc(g.t)}">Videoyu izle</button>` : '';
+  return `<div><small>${o.label}${gun ? ' · ' + esc(gun) : ''}</small><b>${k === 'yar' ? esc(g.d || g.t) : esc(g.t) + (g.d ? ' · ' + esc(g.d) : '')}</b></div>${vb ? `<div class="gal-r">${yy}${vb}</div>` : yy}`;
 }
-const galipBlock = d => d && d.atId ? Object.keys(GL).map(k => `<div class="${GL[k].cls}" data-k="${k}" data-id="${esc(d.atId)}">${galipInner(k, d.atId)}</div>`).join('') : '';
+const yarisBlock = d => d && d.atId ? `<div class="${GL.yar.cls}" data-k="yar" data-id="${esc(d.atId)}">${galipInner('yar', d.atId)}</div>` : '';
+const galipBlock = d => d && d.atId ? Object.keys(GL).filter(k => k !== 'yar').map(k => `<div class="${GL[k].cls}" data-k="${k}" data-id="${esc(d.atId)}">${galipInner(k, d.atId)}</div>`).join('') : '';
 const galipRefresh = (k, id) => { const h = galipInner(k, id); document.querySelectorAll('.hgal[data-k="' + k + '"][data-id="' + id + '"]').forEach(el => { if(el._h !== h){ el._h = h; el.innerHTML = h; } }); };
 // Kuyruktaki işleri (türüne göre 3 paralel) çeker, geldikçe kartı yerinde günceller
 function galipPompa(k){
@@ -419,7 +421,7 @@ function infoPanel(h){
   const top = (s6 || tk || ek) ? `${(s6 || tk) ? `<div class="hrow">${s6}${tk}</div>` : ''}${ek}` : '';
   if(!top && !stats && !best && !lines && !(d && d.atId)) return '';
   const idmE = d && d.idm, idmRow = (idmE && idmE.k && idmE.a) ? `<div class="idm-row" data-k="${esc(idmE.k)}" data-a="${esc(idmE.a)}" data-h="${esc(idmE.h || '')}" data-n="${esc(h.name || '')}"><span class="idm-pl">▶</span><span class="idm-tx"><b>İdman videosunu izle</b></span><span class="idm-ok">İzle ›</span></div>` : '';
-  const inner = `${stats ? `<div class="hst">${stats}</div>` : ''}${idmRow}${best}${galipBlock(d)}${lines ? `<div class="hdet" data-k="${esc(detKey(h))}" onclick="event.stopPropagation()"><button type="button" class="hd-s" aria-expanded="false" onclick="detTg(this)"><span>Orijin, sahip, antrenör</span></button><div class="anim"><div class="anim-in"><div class="hls">${lines}</div></div></div></div>` : ''}`;
+  const inner = `${stats ? `<div class="hst">${stats}</div>` : ''}${idmRow}${yarisBlock(d)}${best}${galipBlock(d)}${lines ? `<div class="hdet" data-k="${esc(detKey(h))}" onclick="event.stopPropagation()"><button type="button" class="hd-s" aria-expanded="false" onclick="detTg(this)"><span>Orijin, sahip, antrenör</span></button><div class="anim"><div class="anim-in"><div class="hls">${lines}</div></div></div></div>` : ''}`;
   if(!inner.trim()) return top ? `<div class="hinfo">${top}</div>` : '';
   // Kapalıyken tek satır özet: yaş · sıklet · HP · son koşu. "Detay" ile tüm bilgiler açılır
   const prev = [v(d.yas) ? esc(d.yas) : '', sik ? esc(sik) + ' kg' : '', v(d.hp) ? '<b class="hp">HP ' + esc(d.hp) + '</b>' : '', kgsTxt ? `<b class="${kgsCls}">${esc(kgsTxt)}</b>` : ''].filter(Boolean).join(' · ');
