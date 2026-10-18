@@ -266,6 +266,16 @@ Object.keys(GL).forEach(k => {
   try{ o.c = JSON.parse(localStorage.getItem(o.key) || '{}') || {}; }catch(e){ o.c = {}; }
 });
 const galipGet = (k, id) => { const g = GL[k].c[id]; return g && Date.now() - g.ts < GALIP_TTL ? g : null; };
+// Son yarış kartının at numarası: kart hemen çizilir, numara arkadan (koşu sonuç sayfasından) bulunup rozete eklenir
+const _yarNb = new Set();
+function yarNoBul(id){
+  const g = GL.yar.c[id]; if(!g || g.n || g.no || !g.st || !g.sh || !g.kn || !g.t || _yarNb.has(id)) return;
+  _yarNb.add(id);
+  TJK.kosuIlk4(g.sh, g.t, g.kn).then(l => {
+    const x = l && l.find(r => r.st && r.st === +g.st);
+    if(x && x.no){ g.no = String(x.no); galipSave('yar'); galipRefresh('yar', id); }
+  }).catch(() => {});
+}
 function galipSave(k){ try{ localStorage.setItem(GL[k].key, JSON.stringify(GL[k].c)); }catch(e){} }
 function galipGun(t){
   const m = /^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/.exec(t || ''); if(!m) return '';
@@ -300,7 +310,7 @@ function galipPompa(k){
   while(o.run < 3 && o.q.length){
     const id = o.q.shift(); o.run++;
     TJK[o.fn](id).then(r => {
-      if(r){ o.c[id] = Object.assign({ts: Date.now()}, r); galipSave(k); delete o.fail[id]; }
+      if(r){ o.c[id] = Object.assign({ts: Date.now()}, r); galipSave(k); delete o.fail[id]; if(k === 'yar') yarNoBul(id); }
       else o.fail[id] = Date.now();
     }).catch(e => { o.fail[id] = Date.now(); o.err[id] = String((e && e.message) || e).slice(0, 260); }).finally(() => {
       o.run--; delete o.busy[id];
@@ -339,7 +349,7 @@ function galipYukle(root){
     const o = GL[k], gor = [];
     root.querySelectorAll('.hgal[data-k="' + k + '"][data-id]').forEach(el => {
       const id = el.dataset.id;
-      if(galipGet(k, id)) return;
+      if(galipGet(k, id)){ if(k === 'yar') yarNoBul(id); return; }
       if(o.fail[id] && Date.now() - o.fail[id] < 600000) return;
       if(o.busy[id]){ const i = o.q.indexOf(id); if(i > 0){ o.q.splice(i, 1); gor.push(id); } return; }
       o.busy[id] = 1; gor.push(id);

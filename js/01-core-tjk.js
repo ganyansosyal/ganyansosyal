@@ -1277,14 +1277,6 @@ async function atSonYaris(atId) {
         }
         if (v) sonuc.v = v;
       } catch (e) {}
-      // At numarası profil tablosunda yok: koşunun sonuç sayfasında aynı kapıdaki (St) atın numarasını bul. Olmazsa rozet gösterilmez.
-      if (sonuc.st && sonuc.sh && sonuc.kn) {
-        try {
-          const l = await Promise.race([kosuIlk4(sonuc.sh, sonuc.t, sonuc.kn), new Promise(r => setTimeout(() => r(null), 9000))]);
-          const x = l && l.find(r => r.st && r.st === +sonuc.st);
-          if (x && x.no) sonuc.no = String(x.no);
-        } catch (e) {}
-      }
       return sonuc;
     }
     return { n: 1 };
@@ -1293,19 +1285,20 @@ async function atSonYaris(atId) {
 }
 // ---- GEÇMİŞ BİR KOŞUNUN İLK 4'Ü (TJK günlük sonuç sayfasından) ----
 // tarih: '09.10.2026'. Dönüş: [{sr, no, ad, g}] | null. Sonuç değişmediği için 30 gün saklanır.
+const _ilk4Sehir = {}, _ilk4Html = {};   // aynı gün/sayfa için tek istek paylaşılır
 async function kosuIlk4(sehirAdi, tarih, kosuNo) {
   const m = /^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/.exec(tarih || ''); if (!m || !kosuNo) return null;
   const iso = m[3] + '-' + String(m[2]).padStart(2, '0') + '-' + String(m[1]).padStart(2, '0');
   const ck = 'gs_ilk4_v4', key = turkceNormalizeAnahtar(sehirAdi) + '|' + iso + '|' + kosuNo;
   let depo = {}; try { depo = JSON.parse(localStorage.getItem(ck) || '{}') || {}; } catch (e) {}
   if (depo[key] && Date.now() - depo[key].ts < 30 * 86400000) return depo[key].v;
-  const ls = await sehirleriGetir(iso);
+  const ls = await (_ilk4Sehir[iso] || (_ilk4Sehir[iso] = sehirleriGetir(iso).catch(e => { delete _ilk4Sehir[iso]; throw e; })));
   const hedef = turkceNormalizeAnahtar(sehirAdi);
   const sh = (ls.sehirler || []).find(s => { const a = turkceNormalizeAnahtar(s.adi); return a.startsWith(hedef) || hedef.startsWith(a); });
   if (!sh) return null;
   const era = eraHesapla(iso);
   const url = `https://www.tjk.org/TR/yarissever/Info/Sehir/GunlukYarisSonuclari?SehirId=${sh.id}&QueryParameter_Tarih=${encodeURIComponent(isoyuTjkTarihineCevir(iso))}&SehirAdi=${encodeURIComponent(sh.adi)}&Era=${era}`;
-  const html = await (await fetchWithTimeout(url, 30000, 1)).text();
+  const html = await (_ilk4Html[url] || (_ilk4Html[url] = fetchWithTimeout(url, 30000, 1).then(r => r.text()).catch(e => { delete _ilk4Html[url]; throw e; })));
   const dom = new DOMParser().parseFromString(html, 'text/html');
   const basliklar = Array.from(dom.body.querySelectorAll('*')).filter(el => el.children.length <= 2 && /^\d+\.\s*Koşu/.test((el.textContent || '').trim()) && (el.textContent || '').trim().length < 400);
   const norm = s => String(s || '').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
