@@ -2989,6 +2989,9 @@ body.maint .app,body.maint #auth,body.maint #banned{visibility:hidden!important}
 .hgal.hgop{background:rgba(37,99,235,.10)}
 .hgal.hgop small,.hgal.hgop b,.hgal.hgop span{color:#2563eb}
 
+.hgal.hyar{background:rgba(124,58,237,.10)}
+.hgal.hyar small,.hgal.hyar b,.hgal.hyar span{color:#7c3aed}
+
 
 
 /* Ekürü satırı */
