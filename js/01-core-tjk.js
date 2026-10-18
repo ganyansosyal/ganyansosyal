@@ -1288,7 +1288,7 @@ async function atSonYaris(atId) {
 async function kosuIlk4(sehirAdi, tarih, kosuNo) {
   const m = /^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/.exec(tarih || ''); if (!m || !kosuNo) return null;
   const iso = m[3] + '-' + String(m[2]).padStart(2, '0') + '-' + String(m[1]).padStart(2, '0');
-  const ck = 'gs_ilk4_v2', key = turkceNormalizeAnahtar(sehirAdi) + '|' + iso + '|' + kosuNo;
+  const ck = 'gs_ilk4_v3', key = turkceNormalizeAnahtar(sehirAdi) + '|' + iso + '|' + kosuNo;
   let depo = {}; try { depo = JSON.parse(localStorage.getItem(ck) || '{}') || {}; } catch (e) {}
   if (depo[key] && Date.now() - depo[key].ts < 30 * 86400000) return depo[key].v;
   const ls = await sehirleriGetir(iso);
@@ -1312,12 +1312,11 @@ async function kosuIlk4(sehirAdi, tarih, kosuNo) {
     let iS = bas.findIndex(h => /^(S|Sıra|Sira)$/i.test(h)); if (iS < 0) iS = 0;
     const iIsim = bas.findIndex(h => /At\s*İsmi/i.test(h));
     const iGny = bas.findIndex(h => /^Gny$/i.test(h));
-    const iSt = bas.findIndex(h => /^St$/i.test(h));
-    const iNo = bas.findIndex((h, i) => i !== iS && /^(At\s*No|No|Nu|Numara)$/i.test(h));
+    const iNo = bas.findIndex((h, i) => i !== iS && /^(At\s*No|No|Nu|Numara|Forma)$/i.test(h));
     const out = [];
     trs.slice(bi + 1).forEach(tr => {
       const td = tr.querySelectorAll('td'); if (td.length <= Math.max(iS, iIsim)) return;
-      const sr = parseInt(td[iS].textContent.trim()); if (!sr || sr > 4) return;
+      const sr = parseInt(td[iS].textContent.trim()); if (!sr) return;
       // İsim hücresinde takı kısaltmaları ve gizli açıklama metinleri ("DBDilinin bağlanacağını…") de var: önce bağlantı metnini, yoksa iç öğeleri atarak al
       const hucre = td[iIsim];
       const hamTam = norm(hucre.textContent);
@@ -1332,7 +1331,8 @@ async function kosuIlk4(sehirAdi, tarih, kosuNo) {
       const ad = ham.replace(/\(\s*\d{1,2}\s*\)/g, ' ').replace(/\s*\([A-Z]{2,4}\)\s*$/, '').replace(/\s+/g, ' ').trim();
       const cellNo = x => x >= 0 && td[x] ? parseInt(td[x].textContent) || 0 : 0;
       const g = iGny >= 0 && td[iGny] ? norm(td[iGny].textContent) : '';
-      out.push({ sr, no: cellNo(iSt) || cellNo(iNo) || (mN ? +mN[1] : 0), ad, g: /^\d+[.,]\d+$/.test(g) ? g : '' });
+      out.push({ sr, no: (mN ? +mN[1] : 0) || cellNo(iNo), ad,   // at numarası: isimdeki (7); St sütunu başlangıç kapısıdır, kullanılmaz
+         g: /^\d+[.,]\d+$/.test(g) ? g : '' });
     });
     out.sort((a, b) => a.sr - b.sr);
     if (!out.length) return null;
@@ -2087,16 +2087,22 @@ function showToast(m){
   // Videonun altı: atın adı + o yarıştaki numarası, ardından koşunun ilk 4'ü
   function idmEk(box, ad, ek){
     if(!box || !ek) return;
-    const no = parseInt(ek.no) || 0;
     const nrmA = s => String(s || '').toLocaleUpperCase('tr').replace(/[^A-ZÇĞİÖŞÜ0-9]/g, '');
-    if(ad || no) box.innerHTML = '<div class="vm-me">' + (no ? sc(no) : '') + '<div class="nm"><span>' + esc(ad || '') + '</span><small>' + esc(ek.l || '') + (ek.sh || ek.kn ? ' · ' + esc([ek.sh, ek.kn ? ek.kn + '. Koşu' : ''].filter(Boolean).join(' ')) : '') + '</small></div></div>';
+    const alt = esc(ek.l || '') + (ek.sh || ek.kn ? ' · ' + esc([ek.sh, ek.kn ? ek.kn + '. Koşu' : ''].filter(Boolean).join(' ')) : '');
+    // At numarası tabloda yok (St sütunu kapıdır); sonuç listesinden at adıyla bulunur, bulunamazsa rozet gösterilmez
+    const meHtml = no => '<div class="vm-me">' + (no ? sc(no) : '') + '<div class="nm"><span>' + esc(ad || '') + '</span><small>' + alt + '</small></div></div>';
+    if(ad) box.innerHTML = meHtml(0);
     if(!ek.kn || !ek.sh || !ek.dt) return;
     TJK.kosuIlk4(ek.sh, ek.dt, ek.kn).then(l => {
       if(!l || !l.length || !document.body.contains(box)) return;
-      const rows = l.map(x => {
-        const mine = (no && x.no === no) || (ad && nrmA(x.ad) === nrmA(ad));
+      const benim = ad ? l.find(x => nrmA(x.ad) === nrmA(ad)) : null;
+      const top = l.filter(x => x.sr <= 4);
+      const rows = top.map(x => {
+        const mine = benim && x === benim;
         return '<div class="r' + x.sr + (mine ? ' me' : '') + '"><i class="rk">' + x.sr + '</i>' + (x.no ? sc(x.no) : '') + '<div class="nm"><span>' + esc(x.ad) + '</span><small>' + (['Kazandı', '2. oldu', '3. oldu', '4. oldu'][x.sr - 1] || x.sr + '. oldu') + '</small></div>' + (x.g ? '<em>Ganyan ' + esc(x.g) + '</em>' : '') + '</div>';
       }).join('');
+      const me0 = box.querySelector('.vm-me');
+      if(benim && benim.no){ if(me0) me0.outerHTML = meHtml(benim.no); else if(ad) box.insertAdjacentHTML('afterbegin', meHtml(benim.no)); }
       box.insertAdjacentHTML('beforeend', '<div class="vm-rt">Koşu sonucu</div><div class="vm-res">' + rows + '</div>');
     }).catch(() => {});
   }
