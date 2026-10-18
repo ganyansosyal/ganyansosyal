@@ -564,22 +564,19 @@ function parseAtTablosu(tablo) {
     const sikHam = al(idxSiklet) || '', sikFazla = (sikHam.match(/\+\s*(\d+(?:[.,]\d+)?)/) || [])[1] || null;
     const tek = idx => { const v = al(idx); return v ? v.replace(/\s+/g, ' ').trim() : null; };
 
-    // ---- İDMAN VİDEOSU (TJK program tablosundaki kırmızı ▶ düğmesi) ----
+    // ---- İDMAN VİDEOSU: İdm hücresindeki bağlantıdan KosuKodu ve Atkodu alınır ----
+    // Video adresi: https://video-cdn.tjk.org/videoftp/idmanpisti/YIL/AY/<KosuKodu>-<Atkodu>.mp4
     let idmUrl = null;
     if (idxIdm >= 0 && hucreler[idxIdm]) {
-      const hc = hucreler[idxIdm];
-      const parcalar = [];
-      const atla = (e, ad) => /^(class|style|alt|width|height|id)$/i.test(ad) || (e.tagName === 'IMG' && /^(src|srcset)$/i.test(ad));
-      hc.querySelectorAll('*').forEach(e => Array.from(e.attributes || []).forEach(at => { if (!atla(e, at.name)) parcalar.push(at.value); }));
-      Array.from(hc.attributes || []).forEach(at => { if (!atla(hc, at.name)) parcalar.push(at.value); });
-      const tumu = parcalar.join(' ');
-      const m = /(https?:)?\/\/[^\s'"()<>]+\.(?:mp4|webm|m3u8)[^\s'"()<>]*/i.exec(tumu) || /(https?:)?\/\/[^\s'"()<>]*(?:idman|video|youtu)[^\s'"()<>]*/i.exec(tumu) || /\/[^\s'"()<>]*(?:idman|video)[^\s'"()<>]*/i.exec(tumu);
-      const ln = hc.querySelector('a[href]');
-      let h = m ? m[0] : (ln && !/^javascript|^#/i.test(ln.getAttribute('href') || '') ? ln.getAttribute('href') : '');
-      if (/\.(png|jpe?g|gif|svg|webp|ico)(\?|$)/i.test(h)) h = '';
-      (window.__idmRaw = window.__idmRaw || {})[String(isim).toLocaleUpperCase('tr').trim()] = hc.innerHTML.replace(/\s+/g, ' ').trim().slice(0, 900);
-      try { if (h) idmUrl = new URL(h, 'https://www.tjk.org/').href; } catch (e) {}
-      if (idmUrl && isim) { (window.__idm = window.__idm || {})[String(isim).toLocaleUpperCase('tr').trim()] = idmUrl; }
+      const hc = hucreler[idxIdm], par = [];
+      hc.querySelectorAll('*').forEach(e => Array.from(e.attributes || []).forEach(at => par.push(at.value)));
+      Array.from(hc.attributes || []).forEach(at => par.push(at.value));
+      const tumu = par.join(' ');
+      const mk = /KosuKodu=(\d+)/i.exec(tumu), ma = /Atkodu=(\d+)/i.exec(tumu);
+      if (mk && ma) {
+        idmUrl = { k: mk[1], a: ma[1] };
+        if (isim) { (window.__idm = window.__idm || {})[String(isim).toLocaleUpperCase('tr').trim()] = idmUrl; }
+      }
     }
 
     atlar.push({
@@ -1947,11 +1944,9 @@ function showToast(m){
     }
     const yapildi = new Set();
     adaylar.forEach(el => {
-      // kutuları taşıyan kapsayıcıyı bul (içinde "Orijin, sahip" satırı da olan ilk üst), kutu = kapsayıcının bu öğeyi içeren çocuğu
       let kap = el.parentElement, kutu = el, g = 0;
       while(kap && g < 8 && !/Orijin/i.test(kap.textContent || '')){ kutu = kap; kap = kap.parentElement; g++; }
       if(!kap) return;
-      // at kartını bul (içinde at ismi geçen en yakın üst)
       let kart = kap, ad = null, s = 0;
       while(kart && s < 8){
         const tx = (kart.textContent || '').toLocaleUpperCase('tr');
@@ -1959,31 +1954,50 @@ function showToast(m){
         if(ad) break;
         kart = kart.parentElement; s++;
       }
-      if(!ad) return;
-      if(kart.querySelector('.idm-row')) return;
-      if(yapildi.has(kart)) return; yapildi.add(kart);
+      if(!ad || kart.querySelector('.idm-row') || yapildi.has(kart)) return;
+      yapildi.add(kart);
       const d = document.createElement('div');
-      d.className = 'idm-row'; d.setAttribute('data-src', harita[ad]);
-      d.innerHTML = '<span class="idm-pl">▶</span><span class="idm-tx"><b>İdman videosunu izle</b></span><span class="idm-ok">VİDEO</span>';
+      d.className = 'idm-row'; d.setAttribute('data-k', harita[ad].k); d.setAttribute('data-a', harita[ad].a); d.setAttribute('data-n', ad);
+      d.innerHTML = '<span class="idm-pl">▶</span><span class="idm-tx"><b>İdman videosunu izle</b></span><span class="idm-ok">İzle ›</span>';
       kap.insertBefore(d, kutu);
     });
   }
   new MutationObserver(() => { clearTimeout(ekle.h); ekle.h = setTimeout(ekle, 200); }).observe(document.body, { childList:true, subtree:true });
+
+  // Aday adresler: görüntülenen tarihin ayı, bir önceki ve bir sonraki ay (ay başı/sonu idmanları için)
+  function adresler(k, a){
+    const iso = (typeof viewIso === 'string' && viewIso) ? viewIso : new Date().toISOString().slice(0, 10);
+    let [y, m] = iso.split('-').map(Number);
+    const f = (yy, mm) => { if(mm < 1){ mm = 12; yy--; } if(mm > 12){ mm = 1; yy++; } return 'https://video-cdn.tjk.org/videoftp/idmanpisti/' + yy + '/' + String(mm).padStart(2, '0') + '/' + k + '-' + a + '.mp4'; };
+    return [f(y, m), f(y, m - 1), f(y, m + 1)];
+  }
+  function idmAc(k, a, ad){
+    vidCloseModal(true);
+    const c = adresler(k, a); let i = 0;
+    const o = document.createElement('div'); o.id = 'vm'; o.className = 'vm vm-wide';
+    o.innerHTML = '<div class="vm-s" role="dialog" aria-modal="true">' +
+      '<div class="vm-h"><span class="vm-ch">▶</span><div class="vm-t">' + esc(ad) + '<small>İdman görüntüsü</small></div>' +
+      '<button type="button" class="vm-x" aria-label="Kapat" onclick="vidCloseModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>' +
+      '<video controls playsinline autoplay preload="metadata" controlsList="nodownload" src="' + c[0] + '"></video>' +
+      '<div class="idm-err" style="display:none;color:#fca5a5;padding:12px 14px;font-weight:600">İdman videosu bulunamadı.</div>' +
+      '<div class="vm-b" style="padding:10px 12px">' +
+      '<button type="button" onclick="vidSeek(-10)">↺ 10</button><button type="button" onclick="vidSeek(10)">10 ↻</button><span class="sp"></span>' +
+      '<div class="vm-seg"><button type="button" onclick="vidSpeed(this,0.5)">0.5x</button><button type="button" class="on" onclick="vidSpeed(this,1)">1x</button><button type="button" onclick="vidSpeed(this,2)">2x</button></div>' +
+      '<button type="button" class="vm-fs" onclick="vidFull()" aria-label="Tam ekran"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>' +
+      '</div></div>';
+    o.addEventListener('click', e => { if(e.target === o) vidCloseModal(); });
+    document.body.appendChild(o);
+    document.body.style.overflow = 'hidden';
+    if(!_vmH){ try{ history.pushState({vm: 1}, ''); _vmH = true; }catch(e){} }
+    const v = o.querySelector('video');
+    v.addEventListener('error', () => {
+      i++;
+      if(i < c.length){ v.src = c[i]; v.play().catch(() => {}); }
+      else { v.style.display = 'none'; o.querySelector('.idm-err').style.display = 'block'; }
+    });
+  }
   document.addEventListener('click', e => {
     const r = e.target.closest && e.target.closest('.idm-row'); if(!r) return;
-    const u = r.getAttribute('data-src'); if(!u) return;
-    if(/\.(mp4|webm)(\?|$)/i.test(u)){
-      const m = document.createElement('div'); m.className = 'idm-modal';
-      m.innerHTML = '<div class="idm-box"><button class="idm-x" aria-label="Kapat">✕</button><video controls autoplay playsinline src="' + u.replace(/"/g, '&quot;') + '"></video></div>';
-      m.addEventListener('click', ev => { if(ev.target === m || ev.target.classList.contains('idm-x')){ const v = m.querySelector('video'); if(v) v.pause(); m.remove(); } });
-      document.body.appendChild(m);
-    } else {
-      const ad = Object.keys(window.__idm || {}).find(k => window.__idm[k] === u);
-      const ham = ((window.__idmRaw || {})[ad] || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
-      const m = document.createElement('div'); m.className = 'idm-modal';
-      m.innerHTML = '<div class="idm-box idm-dbg"><button class="idm-x">✕</button><b>Bulunan bağlantı:</b><br>' + u.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '<br><br><a class="idm-go" href="' + u.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener">Bağlantıyı aç</a><br><br><b>TJK hücresi (HTML):</b><br>' + ham + '</div>';
-      m.addEventListener('click', ev => { if(ev.target === m || ev.target.classList.contains('idm-x')) m.remove(); });
-      document.body.appendChild(m);
-    }
+    idmAc(r.getAttribute('data-k'), r.getAttribute('data-a'), r.getAttribute('data-n') || '');
   });
 })();
