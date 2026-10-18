@@ -257,7 +257,7 @@ function takiChips(d){
 // ---- Son galibiyet + son galop (at sayfalarından, cihazda 12 saat saklanır) ----
 const GALIP_TTL = 12 * 3600 * 1000;
 const GL = {
-  gal: { key: 'gs_galip_v2', label: 'Son galibiyet', none: 'Kayıtlı galibiyeti yok', fn: 'atSonGalibiyet', cls: 'hgal' },
+  gal: { key: 'gs_galip_v3', label: 'Son galibiyet', none: 'Kayıtlı galibiyeti yok', fn: 'atSonGalibiyet', cls: 'hgal' },
   gop: { key: 'gs_galop_v2', label: 'Son galop', none: 'İdman kaydı yok', fn: 'atSonGalop', cls: 'hgal hgop' }
 };
 Object.keys(GL).forEach(k => {
@@ -281,7 +281,9 @@ function galipInner(k, id){
     : `<div><small>${o.label}</small><b class="gm">Aranıyor…</b></div>`;
   if(g.n) return `<div><small>${o.label}</small><b class="gm">${o.none}</b></div>`;
   const gun = galipGun(g.t);
-  return `<div><small>${o.label}${gun ? ' · ' + esc(gun) : ''}</small><b>${esc(g.t)}${g.d ? ' · ' + esc(g.d) : ''}</b></div>${g.y ? `<span>${esc(g.y)}</span>` : ''}`;
+  const yy = g.y ? `<span>${esc(g.y)}</span>` : '';
+  const vb = k === 'gal' && g.v ? `<button type="button" class="gal-vid" data-v="${esc(g.v)}" data-t="${esc(g.t)}">Videoyu izle</button>` : '';
+  return `<div><small>${o.label}${gun ? ' · ' + esc(gun) : ''}</small><b>${esc(g.t)}${g.d ? ' · ' + esc(g.d) : ''}</b></div>${vb ? `<div class="gal-r">${yy}${vb}</div>` : yy}`;
 }
 const galipBlock = d => d && d.atId ? Object.keys(GL).map(k => `<div class="${GL[k].cls}" data-k="${k}" data-id="${esc(d.atId)}">${galipInner(k, d.atId)}</div>`).join('') : '';
 const galipRefresh = (k, id) => document.querySelectorAll('.hgal[data-k="' + k + '"][data-id="' + id + '"]').forEach(el => { el.innerHTML = galipInner(k, id); });

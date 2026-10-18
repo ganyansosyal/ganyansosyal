@@ -1211,6 +1211,22 @@ async function atSonGalibiyet(atId) {
       const pist = (g(iP) || (iM >= 0 && td[iM] ? (td[iM].querySelector('[title],img[alt]') || {}).title || '' : '')).replace(/^K$/i, 'Kum').replace(/^[ÇC]$/i, 'Çim').replace(/^S$/i, 'Sentetik');
       const gny = g(iG).replace(/[^\d.,]/g, '');
       const sonuc = { t: g(iT), d: g(iD), y: [g(iH), g(iM), pist].filter(Boolean).join(' · '), k: [g(iC), g(iJk), gny ? 'Gny ' + gny : ''].filter(Boolean).join(' · ') };
+      // Galibiyet koşusunun videosu: satırdaki bağlantıdan (mp4 / YarisVideo sayfası / KosuKodu) bul
+      try {
+        const rh = rows[i].innerHTML.replace(/&amp;/g, '&');
+        const mp = rh.match(/(?:https?:)?\/\/video-cdn\.tjk\.org\/videoftp\/[^"'\s<>\\]+?\.mp4/i);
+        const hv = rh.match(/href\s*=\s*["']([^"']*YarisVideo[^"']*)["']/i);
+        const kk = rh.match(/KosuKodu\W{0,8}?(-?\d{3,})/i);
+        let v = '';
+        if (mp) v = mp[0].indexOf('//') === 0 ? 'https:' + mp[0] : mp[0];
+        else if (hv) v = new URL(hv[1], 'https://www.tjk.org').href;
+        else if (kk) {   // satırda açık video bağlantısı yok, yalnızca koşu kodu var: eski koşuların videosu TJK'da genelde kalmaz, bu yüzden sadece yakın galibiyetlerde dene
+          const tm = /^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/.exec(sonuc.t || '');
+          const gun = tm ? (Date.now() - new Date(+tm[3], +tm[2] - 1, +tm[1]).getTime()) / 86400000 : 1e9;
+          if (gun <= 90) v = 'https://www.tjk.org/TR/YarisSever/Info/YarisVideoAt/At?AtKodu=' + encodeURIComponent(atId) + '&KosuKodu=' + kk[1];   // TJK'nın at videosu sayfası (atın profilindeki kırmızı oynat düğmesinin açtığı adres)
+        }
+        if (v) sonuc.v = v;
+      } catch (e) {}
       return sonuc;
     }
     return { n: 1 };
@@ -1959,12 +1975,12 @@ function showToast(m){
   const onbKey = () => 'gs_idm_' + ((typeof viewIso === 'string' && viewIso) || 'x');
   const onbOku = id => { try { return (JSON.parse(localStorage.getItem(onbKey()) || '{}'))[id] || ''; } catch (e) { return ''; } };
   const onbYaz = (id, u) => { try { const o = JSON.parse(localStorage.getItem(onbKey()) || '{}'); o[id] = u; localStorage.setItem(onbKey(), JSON.stringify(o)); } catch (e) {} };
-  function idmAc(k, a, ad, href){
+  function idmAc(k, a, ad, href, gal){
     vidCloseModal(true);
     const sayfa = href || ('https://www.tjk.org/TR/yarissever/Info/idmanpisti/Kosu?KosuKodu=' + encodeURIComponent(k) + '&Atkodu=' + encodeURIComponent(a));
     const o = document.createElement('div'); o.id = 'vm'; o.className = 'vm vm-wide';
     o.innerHTML = '<div class="vm-s" role="dialog" aria-modal="true">' +
-      '<div class="vm-h"><span class="vm-ch">▶</span><div class="vm-t">' + esc(ad) + '<small>İdman görüntüsü · ' + esc(k + '-' + a) + '</small></div>' +
+      '<div class="vm-h"><span class="vm-ch">▶</span><div class="vm-t">' + esc(ad) + '<small>' + (gal ? 'Son galibiyet · ' + esc(gal) : 'İdman görüntüsü · ' + esc(k + '-' + a)) + '</small></div>' +
       '<button type="button" class="vm-x" aria-label="Kapat" onclick="vidCloseModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>' +
       '<video controls playsinline preload="metadata" controlsList="nodownload" style="display:none"></video>' +
       '<div class="idm-err" style="color:#cbd5e1;padding:18px 14px;font-weight:700">Video aranıyor…</div>' +
@@ -1982,6 +1998,7 @@ function showToast(m){
     const oynat = u => { if(!document.body.contains(o)) return; msg.style.display = 'none'; v.style.display = 'block'; v.src = u; v.play().catch(() => {}); };
     (async () => {
       let hata = '', bulunan = onbOku(k + '-' + a);
+      if(gal && !bulunan && /\.mp4(\?|$)/i.test(href || '')) bulunan = href;   // bağlantı doğrudan mp4 ise sayfa okumaya gerek yok
       // 1) TJK'nın idman sayfasını okuyup mp4 adresini oradan al (koşu videosuyla aynı yöntem)
       if(!bulunan) try {
         window.__tjkFresh = true;
@@ -1996,6 +2013,7 @@ function showToast(m){
         v.addEventListener('error', () => { try { const o = JSON.parse(localStorage.getItem(onbKey()) || '{}'); delete o[k + '-' + a]; localStorage.setItem(onbKey(), JSON.stringify(o)); } catch (e) {} msg.style.display = 'block'; v.style.display = 'none'; msg.innerHTML = 'Video yüklenemedi.<br><small style="font-weight:500;opacity:.8;word-break:break-all">' + esc2(bulunan) + '</small>'; }, { once: true });
         return oynat(bulunan);
       }
+      if(gal){ v.style.display = 'none'; msg.style.display = 'block'; msg.innerHTML = 'Galibiyet videosu bulunamadı.<br><small style="font-weight:500;opacity:.8;word-break:break-all">Neden: ' + esc2(hata || 'bilinmiyor') + '<br>Sayfa: ' + esc2(sayfa) + '</small>'; return; }
       // 2) Sayfa okunamadıysa: adresi tarihten tahmin ederek dene
       const c = adresler(k, a); let i = 0;
       v.addEventListener('error', () => {
@@ -2007,6 +2025,15 @@ function showToast(m){
     })();
   }
   document.addEventListener('click', e => {
+    const gb = e.target.closest && e.target.closest('.gal-vid');
+    if(gb){
+      e.stopPropagation();
+      try {
+        const u = gb.getAttribute('data-v') || '', hr = gb.closest('.hr'), nb = hr && hr.querySelector('.hn b');
+        idmAc('g', (u.match(/KosuKodu=(-?\d+)/) || u.match(/([\w-]+)\.mp4/) || [0, u.slice(-24)])[1], nb ? nb.textContent.trim() : '', u, gb.getAttribute('data-t') || '');
+      } catch (err) { showToast('Video hatası: ' + (err && err.message ? err.message : err)); }
+      return;
+    }
     const r = e.target.closest && e.target.closest('.idm-row'); if(!r) return;
     e.stopPropagation();
     try {
