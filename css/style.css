@@ -3036,3 +3036,19 @@ body.maint .app,body.maint #auth,body.maint #banned{visibility:hidden!important}
 .orn-s.dn b,.orn-s.dn small{color:#15a34a}
 .orn-s.up b,.orn-s.up small{color:#e11d48}
 .orn-yenile{display:block;margin:14px auto 4px;padding:9px 22px;border-radius:999px;background:var(--sf);border:1px solid var(--ln);font-size:13.5px;font-weight:700;color:var(--tx)}
+.orn-hd,.orn-row{display:grid;grid-template-columns:30px minmax(0,1fr) 52px 52px;gap:8px;align-items:center;padding:10px 12px}
+.orn-hd{font-size:11.5px;color:var(--mu);border-bottom:1px solid var(--ln)}
+.orn-hd span:nth-child(n+3),.orn-num{text-align:right}
+.orn-it+.orn-it{border-top:1px solid var(--ln)}
+.orn-row{cursor:pointer;font-size:14px}
+.orn-ad{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.orn-cnt{font-size:11.5px;font-weight:500;color:var(--mu);margin-left:6px}
+.orn-num{font-variant-numeric:tabular-nums}
+.orn-ilk{color:var(--mu)}
+.orn-son{font-weight:800}
+.orn-det{background:var(--sf2);padding:4px 12px 8px 50px}
+.orn-d{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;font-variant-numeric:tabular-nums}
+.orn-d+.orn-d{border-top:1px solid var(--ln)}
+.orn-d span{color:var(--mu)}
+.orn-d b{font-weight:700}
+.orn-more{font-size:12.5px;font-weight:700;color:var(--ac);padding:6px 0 2px;cursor:pointer}
