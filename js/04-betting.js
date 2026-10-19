@@ -407,7 +407,7 @@ function animTg(btn, set){
   const box = btn.parentElement, k = box.dataset.k; if(!k) return;
   const open = box.classList.toggle('open');
   btn.setAttribute('aria-expanded', open);
-  if(open) set.delete(k); else set.add(k);
+  if(open) set.add(k); else set.delete(k);
 }
 function detTg(btn){
   const box = btn.parentElement, k = box.dataset.k; if(!k) return;
@@ -415,8 +415,8 @@ function detTg(btn){
   btn.setAttribute('aria-expanded', open);
   if(open) _detAcik.add(k); else _detAcik.delete(k);
 }
-const _moreClosed = new Set();
-function moreTg(btn){ animTg(btn, _moreClosed); }
+const _moreAcik = new Set();   // "Detay bilgileri" varsayılan KAPALI; kullanıcının açtıkları burada tutulur
+function moreTg(btn){ animTg(btn, _moreAcik); }
 // Ekürü: aynı koşuda aynı sahibe ait diğer atlar
 function ekuriHtml(h){
   const d = h.d; if(!d || !d.sahip || h.kosmaz) return '';
@@ -506,7 +506,7 @@ function patchOranlar(){
 }
 function applyOpen(root){
   root.querySelectorAll('.hmore[data-k],.hdet[data-k]').forEach(b => {
-    const kapali = b.classList.contains('hmore') ? _moreClosed.has(b.dataset.k) : !_detAcik.has(b.dataset.k);
+    const kapali = b.classList.contains('hmore') ? !_moreAcik.has(b.dataset.k) : !_detAcik.has(b.dataset.k);
     b.classList.toggle('open', !kapali);
     const s = b.firstElementChild; if(s) s.setAttribute('aria-expanded', String(!kapali));
   });
@@ -538,13 +538,16 @@ function _renderBulten(){
     ? `${lr[0]}.–${lr[lr.length - 1]}. koşu · her ayakta plase'ye girecek atı bul`
     : `${lr[0]}.–${lr[lr.length - 1]}. koşu · her ayakta kazananı bul`);
   let hintTxt = T.hint || '';
+  if(!hintTxt && !raceDone(city, race) && !selList().length) hintTxt = 'Seçmek için atın üstüne dokun';
   if(T.mode === 'race' && !oyunMusait(T, city, race)){ const ks0 = tekMusait(T).kos || []; hintTxt = tLabel(T) + ' bu koşuda oynanmıyor' + (ks0.length ? ' · oynanan: ' + fmtKos(ks0) : ''); }
   $('hint').textContent = hintTxt;
   $('hint').classList.toggle('hidden', !hintTxt);
 
   $('city-tabs').innerHTML = CITIES.map(c => `<button class="chip ${c===city?'on':''}" onclick="selectCity('${c}')">${c}</button>`).join('');
   const rt = $('race-tabs');
-  const rtHtml = allRaces(city).map(r => `<button class="chip ${r===race?'on':''} ${anyIn(r)?'has':''} ${raceDone(city, r)?'fin':''} ${(T.mode==='legs' && !lr.includes(r)) || (T.mode==='race' && !oyunMusait(T, city, r)) ? 'dim' : ''}" onclick="selectRace(${r})">${r}. Koşu</button>`).join('');
+  // Seçili bahis türünde oynanmayan koşular kapalı: soluk görünür ve tıklanamaz
+  const kosuKapali = r => (T.mode==='legs' && !lr.includes(r)) || (T.mode==='race' && !oyunMusait(T, city, r));
+  const rtHtml = allRaces(city).map(r => { const kp = kosuKapali(r); return `<button class="chip ${r===race?'on':''} ${anyIn(r)?'has':''} ${raceDone(city, r)?'fin':''} ${kp ? 'dim kapali' : ''}" ${kp ? 'disabled aria-disabled="true"' : `onclick="selectRace(${r})"`}>${r}. Koşu</button>`; }).join('');
   const rtSame = rt._h === rtHtml; setHtml(rt, rtHtml);
   const act = rt.querySelector && rt.querySelector('.on');
   if(act && !rtSame) rt.scrollLeft = act.offsetLeft - (rt.clientWidth - act.clientWidth) / 2;
@@ -574,7 +577,7 @@ function _renderBulten(){
         <small>${esc(h.jockey)}${h.d && h.d.ap ? ' <em class="apb">AP</em>' : ''}${h.d && h.d.fazla ? ' <em class="fz">+' + esc(h.d.fazla) + '</em>' : ''}</small>
       </div>
       <div class="od">${odInner(h, fin)}</div>
-      ${h.kosmaz ? '<span class="tick" style="opacity:0"></span>' : fin ? (admTest() && hit ? `<span class="tick">${T.one ? hit.slot + 1 : ic('ok',15)}</span>` : rk > -1 ? `<span class="rkb r${Math.min(rk+1,5)}">${rk+1}</span>` : '<span class="tick"></span>') : `<span class="tick">${hit ? (T.one ? hit.slot + 1 : ic('ok',15)) : ''}</span>`}
+      ${h.kosmaz ? '<span class="tick" style="opacity:0"></span>' : fin ? (admTest() && hit ? `<span class="tick">${T.one ? hit.slot + 1 : ic('ok',15)}</span>` : rk > -1 ? `<span class="rkb r${Math.min(rk+1,5)}">${rk+1}</span>` : '<span class="tick"></span>') : `<span class="tick${hit ? '' : ' add'}">${hit ? (T.one ? hit.slot + 1 : ic('ok',15)) : ''}</span>`}
       ${infoPanel(h)}
     </div>`;
   }).join(''));
@@ -615,3 +618,12 @@ function _renderBulten(){
   }
 }
 
+
+// Seçilmemiş atın dairesinde "+" görünür: dokununca seçileceği anlaşılsın
+(function(){
+  if(document.getElementById('pick-css')) return;
+  const st = document.createElement('style'); st.id = 'pick-css';
+  st.textContent = '.hr .tick.add::before{content:"+";font-size:26px;font-weight:500;line-height:1;color:var(--green,#0f8a5f)}'
+    + '.hr .tick.add{display:flex;align-items:center;justify-content:center;border-color:var(--green,#0f8a5f)}';
+  document.head.appendChild(st);
+})();
