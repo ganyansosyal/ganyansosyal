@@ -284,7 +284,12 @@ function yarNoPompa(){
   }).catch(() => {}).finally(() => { _yarRun = false; setTimeout(yarNoPompa, 400); });
 }
 document.addEventListener('visibilitychange', () => { if(!document.hidden) yarNoPompa(); });
-function galipSave(k){ try{ localStorage.setItem(GL[k].key, JSON.stringify(GL[k].c)); }catch(e){} }
+const _gsT = {};
+function galipSaveNow(k){ clearTimeout(_gsT[k]); _gsT[k] = 0; try{ localStorage.setItem(GL[k].key, JSON.stringify(GL[k].c)); }catch(e){} }
+function galipSave(k){ if(_gsT[k]) return; _gsT[k] = setTimeout(() => galipSaveNow(k), 2500); }   // yığılan kayıtlar tek seferde, ana iş parçacığı rahat kalsın
+function galipFlush(){ Object.keys(GL).forEach(k => { if(_gsT[k]) galipSaveNow(k); }); }
+document.addEventListener('visibilitychange', () => { if(document.hidden) galipFlush(); });
+window.addEventListener('pagehide', galipFlush);
 function galipGun(t){
   const m = /^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/.exec(t || ''); if(!m) return '';
   const n = Math.floor((new Date().setHours(0,0,0,0) - new Date(+m[3], +m[2] - 1, +m[1]).getTime()) / 86400000);
@@ -316,14 +321,17 @@ function galipPompa(k){
   if(typeof _lastTouch === 'number' && Date.now() - _lastTouch < 500){ clearTimeout(o.wt); o.wt = setTimeout(() => galipPompa(k), 600); return; }   // kaydırırken ağır ayrıştırma yapma, bitince devam et
   if(k === 'gop' && TJK.atGaloplarToplu && !(o.workerYok && Date.now() - o.workerYok < 600000)){ return galopTopluPompa(); }
   while(o.run < 3 && o.q.length){
-    const id = o.q.shift(); o.run++;
+    const id = o.q[0];
+    const vis = !!document.querySelector('.hgal[data-k="' + k + '"][data-id="' + id + '"]');   // ekranda mı?
+    if(!vis && o.run >= 1) break;   // ekranda olmayan (önden yükleme) işler tek tek çalışır, ekran kasmasın
+    o.q.shift(); o.run++;
     TJK[o.fn](id).then(r => {
       if(r){ o.c[id] = Object.assign({ts: Date.now()}, r); galipSave(k); delete o.fail[id]; if(k === 'yar') yarNoBul(id); }
       else o.fail[id] = Date.now();
     }).catch(e => { o.fail[id] = Date.now(); o.err[id] = String((e && e.message) || e).slice(0, 260); }).finally(() => {
       o.run--; delete o.busy[id];
       galipRefresh(k, id);
-      setTimeout(() => galipPompa(k), 250); // ayrıştırma işleri üst üste binmesin, ekran akıcı kalsın
+      setTimeout(() => galipPompa(k), vis ? 250 : 700); // ayrıştırma işleri üst üste binmesin; arka plan işleri daha seyrek
     });
     galipRefresh(k, id);
   }
@@ -366,7 +374,7 @@ function galipYukle(root){
     galipPompa(k);
   });
 }
-// Girişte: seçili şehrin atlarının son galopunu arka planda önceden çeker (önce seçili koşu).
+// Girişte: seçili şehrin atlarının son yarış/galibiyet/galop verisini arka planda önceden çeker (önce seçili koşu).
 // Ekran boştayken başlar, veri tasarrufu açıksa ya da sekme gizliyse yapmaz.
 let _gonBekle = false;
 function galopOnYukle(){
@@ -375,14 +383,17 @@ function galopOnYukle(){
     _gonBekle = false;
     try{
       if(document.hidden || (navigator.connection && navigator.connection.saveData)) return;
-      const o = GL.gop;
-      raceList(city).slice().sort((a, b) => (a.no === race ? -1 : b.no === race ? 1 : 0)).forEach(kz => (kz.atlar || []).forEach(a => {
-        const id = a.atId || (a.d && a.d.atId);
-        if(!id || a.kosmaz || galipGet('gop', id) || o.busy[id]) return;
-        if(o.fail[id] && Date.now() - o.fail[id] < 600000) return;
-        o.busy[id] = 1; o.q.push(id);
-      }));
-      galipPompa('gop');
+      // Üç tür de (son yarış, son galibiyet = videolu kartlar, son galop) tüm koşular için önceden çekilir; seçili koşu önce
+      ['yar', 'gal', 'gop'].forEach(k => {
+        const o = GL[k];
+        raceList(city).slice().sort((a, b) => (a.no === race ? -1 : b.no === race ? 1 : 0)).forEach(kz => (kz.atlar || []).forEach(a => {
+          const id = a.atId || (a.d && a.d.atId);
+          if(!id || a.kosmaz || galipGet(k, id) || o.busy[id]) return;
+          if(o.fail[id] && Date.now() - o.fail[id] < 600000) return;
+          o.busy[id] = 1; o.q.push(id);
+        }));
+        galipPompa(k);
+      });
     }catch(e){}
   };
   if(window.requestIdleCallback) requestIdleCallback(basla, {timeout: 3000}); else setTimeout(basla, 800);
