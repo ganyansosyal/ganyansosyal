@@ -1295,7 +1295,7 @@ async function kosuIlk4(sehirAdi, tarih, kosuNo) {
   const ls = await (_ilk4Sehir[iso] || (_ilk4Sehir[iso] = sehirleriGetir(iso).catch(e => { delete _ilk4Sehir[iso]; throw e; })));
   const hedef = turkceNormalizeAnahtar(sehirAdi);
   const sh = (ls.sehirler || []).find(s => { const a = turkceNormalizeAnahtar(s.adi); return a.startsWith(hedef) || hedef.startsWith(a); });
-  if (!sh) return null;
+  if (!sh) { delete _ilk4Sehir[iso]; return null; }
   const era = eraHesapla(iso);
   const url = `https://www.tjk.org/TR/yarissever/Info/Sehir/GunlukYarisSonuclari?SehirId=${sh.id}&QueryParameter_Tarih=${encodeURIComponent(isoyuTjkTarihineCevir(iso))}&SehirAdi=${encodeURIComponent(sh.adi)}&Era=${era}`;
   // Sayfa bir kez indirilir VE bir kez ayrıştırılır (her at için yeniden ayrıştırmak telefonu kasıyordu); ayrıştırma ekran boştayken yapılır
@@ -1345,6 +1345,7 @@ async function kosuIlk4(sehirAdi, tarih, kosuNo) {
     try { localStorage.setItem(ck, JSON.stringify(depo)); } catch (e) {}
     return out;
   }
+  delete _ilk4Html[url];   // tablo bulunamadı: sayfa yarım gelmiş olabilir, tekrar denemede yeniden indir
   return null;
 }
 // ---- ATIN SON GALOBU (İdman İstatistikleri sayfası) ----
@@ -1531,7 +1532,14 @@ function vidCloseModal(silent){
   const o = $('vm'); if(!o) return;
   const v = o.querySelector('video');
   try{ v.pause(); v.removeAttribute('src'); v.load(); }catch(e){}
-  o.remove(); document.body.style.overflow = '';
+  if(silent){ o.remove(); document.body.style.overflow = ''; }
+  else {
+    // Yumuşak kapanış: önce animasyon, sonra kaldır (bu arada yeni pencere açılırsa onun kaydırma kilidi bozulmasın)
+    o.id = 'vm-out'; o.classList.add('out');
+    const bitir = () => { o.remove(); if(!$('vm')) document.body.style.overflow = ''; };
+    o.addEventListener('animationend', e => { if(e.target === o) bitir(); }, { once: true });
+    setTimeout(bitir, 320);
+  }
   if(!silent && _vmH){ _vmH = false; try{ history.back(); }catch(e){} }
 }
 window.addEventListener('popstate', () => { const _st = $('lv-stage'); if(_st && _st.classList.contains('lv-pfs')){ liveFull(false); try{ history.pushState({vm: 1}, ''); _vmH = true; }catch(e){} return; } if($('vm')){ _vmH = false; vidCloseModal(true); } });
@@ -2098,8 +2106,7 @@ function showToast(m){
     const meHtml = no => '<div class="vm-me">' + (no ? sc(no) : '') + '<div class="nm"><span>' + esc(ad || '') + '</span><small>' + alt + '</small></div></div>';
     if(ad) box.innerHTML = meHtml(0);
     if(!ek.kn || !ek.sh || !ek.dt) return;
-    TJK.kosuIlk4(ek.sh, ek.dt, ek.kn).then(l => {
-      if(!l || !l.length || !document.body.contains(box)) return;
+    const goster = l => {
       const benim = ad ? l.find(x => nrmA(x.ad) === nrmA(ad)) : null;
       const top = l.filter(x => x.sr <= 4);
       const rows = top.map(x => {
@@ -2107,9 +2114,27 @@ function showToast(m){
         return '<div class="r' + x.sr + (mine ? ' me' : '') + '"><i class="rk">' + x.sr + '</i>' + (x.no ? sc(x.no) : '') + '<div class="nm"><span>' + esc(x.ad) + '</span><small>' + (['Kazandı', '2. oldu', '3. oldu', '4. oldu'][x.sr - 1] || x.sr + '. oldu') + '</small></div>' + (x.g ? '<em>Ganyan ' + esc(x.g) + '</em>' : '') + '</div>';
       }).join('');
       const me0 = box.querySelector('.vm-me');
-      if(benim && benim.no){ if(me0) me0.outerHTML = meHtml(benim.no); else if(ad) box.insertAdjacentHTML('afterbegin', meHtml(benim.no)); }
+      if(benim && benim.no){ if(me0){ if(!me0.querySelector('.sc')) me0.insertAdjacentHTML('afterbegin', sc(benim.no)); } else if(ad) box.insertAdjacentHTML('afterbegin', meHtml(benim.no)); }
       box.insertAdjacentHTML('beforeend', '<div class="vm-rt">Koşu sonucu</div><div class="vm-res">' + rows + '</div>');
-    }).catch(() => {});
+    };
+    // Tek denemede takılırsa kendiliğinden tekrar dener (1,5 sn ve 4 sn sonra); yine olmazsa "Tekrar dene" düğmesi çıkar
+    const temizle = () => box.querySelectorAll('.idm-ld,.idm-rt').forEach(x => x.remove());
+    const yukle = deneme => {
+      if(!document.body.contains(box)) return;
+      if(!deneme) box.insertAdjacentHTML('beforeend', '<div class="vm-rt idm-ld">Koşu sonucu yükleniyor…</div>');
+      TJK.kosuIlk4(ek.sh, ek.dt, ek.kn).then(l => {
+        if(!document.body.contains(box)) return;
+        if(!l || !l.length) throw new Error('boş');
+        temizle(); goster(l);
+      }).catch(() => {
+        if(!document.body.contains(box)) return;
+        if(deneme < 2){ setTimeout(() => yukle(deneme + 1), deneme ? 4000 : 1500); return; }
+        temizle();
+        box.insertAdjacentHTML('beforeend', '<button type="button" class="idm-rt">Koşu sonucu alınamadı · Tekrar dene</button>');
+        const b = box.querySelector('.idm-rt'); if(b) b.addEventListener('click', () => { temizle(); yukle(0); });
+      });
+    };
+    yukle(0);
   }
   function idmAc(k, a, ad, href, gal, ek){
     vidCloseModal(true);
