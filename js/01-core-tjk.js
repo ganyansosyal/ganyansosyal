@@ -1068,10 +1068,15 @@ async function oranlariGetir(sehirAdi, kosular, tarihIso, ttl = 15000) {
   const [y, m, d] = tarihIso.split('-');
   let cs = canliOku('cs' + tarihIso, ttl);
   if (!cs) {
-    const r = await canliFetch(`https://vhs-medya.tjk.org/muhtemeller/s/${y}/${m}/${d}/checksum.json`);
-    const tx = await r.text(), eskiCs = CANLI['cs' + tarihIso];
-    cs = (eskiCs && eskiCs.tx === tx) ? eskiCs.v : JSON.parse(tx);   // değişmediyse ayrıştırma yok
-    CANLI['cs' + tarihIso] = { t: Date.now(), v: cs, tx };
+    const hk = CANLI['csHata' + tarihIso];
+    if (hk && Date.now() - hk.t < 90000) return {};   // checksum yok/hatalı (404, henüz yayınlanmadı...): 90 sn boyunca tekrar sorma
+    try {
+      const r = await canliFetch(`https://vhs-medya.tjk.org/muhtemeller/s/${y}/${m}/${d}/checksum.json`);
+      const tx = await r.text(), eskiCs = CANLI['cs' + tarihIso];
+      cs = (eskiCs && eskiCs.tx === tx) ? eskiCs.v : JSON.parse(tx);   // değişmediyse ayrıştırma yok
+      CANLI['cs' + tarihIso] = { t: Date.now(), v: cs, tx };
+      delete CANLI['csHata' + tarihIso];
+    } catch (e) { CANLI['csHata' + tarihIso] = { t: Date.now() }; throw e; }
   }
   const runs = (cs && cs.runs) || {};
   const {anahtar, onekler} = canliSehirAnahtari(runs, sehirAdi);
@@ -1735,9 +1740,9 @@ function resPanelHtml(c, r, kisa){
 }
 const resKey = () => 'gs_sonuc_v8_' + viewIso;
 // ---- SONUÇ KONTROLÜ ----
-// Koşu saatinden +3 dk: ilk sonuç (gelene kadar 10 sn'de bir). +4 dk: ödemeler (gelene kadar 10 sn'de bir). +8 dk'dan sonra (TJK geç verirse) dakikada bir. +40 dk: tek seferlik son kontrol.
-const SONUC_ILK = 90000, SONUC_KONTROL = 4 * 60000, SONUC_YAVAS = 20 * 60000, SONUC_FINAL = 40 * 60000, SONUC_SON = 3 * 3600000, SONUC_ARA = 5000;   // SONUC_SON: sonuç hiç gelmezse 3 saat sonra vazgeç (iptal koşu)
-//   // ilk 20 dk (SONUC_YAVAS) boyunca 5 sn'de bir, sonra dakikada bir
+// Koşu BAŞLAMA saatine göre takvim: sonuç + ödemeler +4 dk'dan itibaren 30 sn'de bir sorulur.
+// Video en erken +18 dk, en geç ~+30 dk'da gelir: +18 dk'dan itibaren 30 sn'de bir. İlk 30 dk boyunca her şey 30 sn'de bir; sonrası 60 sn'de bir; +40 dk'da tek seferlik son kontrol.
+const SONUC_ILK = 4 * 60000, SONUC_KONTROL = 4 * 60000, SONUC_VIDEO_ILK = 18 * 60000, SONUC_YAVAS = 30 * 60000, SONUC_VIDEO_SON = 40 * 60000, SONUC_FINAL = 40 * 60000, SONUC_SON = 3 * 3600000, SONUC_ARA = 5000;   // SONUC_SON: sonuç hiç gelmezse 3 saat sonra vazgeç (iptal koşu)
 const idleRun = fn => (window.requestIdleCallback ? requestIdleCallback(fn, {timeout: 1500}) : setTimeout(fn, 50));
 // Sayfayı titretmeden yeniden çiz: kaydırma korunur, kullanıcı yazıyorsa bekler, tek seferde birleştirir
 function softRefresh(){
@@ -1775,9 +1780,9 @@ async function pollSonuc(force){
           const tk = c + '|' + no;
           return (pollSonuc.tried[tk] || 0) < 3;
         }
-        if(!raceRes(c, no)) return age >= SONUC_ILK;                                // 1) ilk sonuç: +3 dk, 30 sn'de bir, gelene kadar
-        // Video bağlantısını TJK sonradan ekler: sonuç + ödeme tamam olsa da video gelene kadar (en çok 90 dk) dakikada bir tekrar bak
-        if(raceRes(c, no) && age >= SONUC_KONTROL && age < 90 * 60000 && !vidGet(c, no) && !MP4[vkey(c, no)]) return true;
+        if(!raceRes(c, no)) return age >= SONUC_ILK;                                // 1) ilk sonuç: +4 dk, 30 sn'de bir, gelene kadar
+        // Video bağlantısını TJK +18 ile +30 dk arasında ekler: +18 dk'dan +40 dk'ya kadar, video gelene kadar tekrar bak
+        if(raceRes(c, no) && age >= SONUC_VIDEO_ILK && age < SONUC_VIDEO_SON && !vidGet(c, no) && !MP4[vkey(c, no)]) return true;
         if(ck >= 2) return false;
         if(age >= SONUC_FINAL) return true;                                         // 3) son kontrol: +40 dk, tek sefer
         return ck === 0 && age >= SONUC_ILK;                                    // 2) ödemeler: +4 dk, 30 sn'de bir, gelene kadar
@@ -1785,10 +1790,10 @@ async function pollSonuc(force){
       if(!due.length) return;
       pollSonuc.fail = pollSonuc.fail || {};
       let bekle = Math.min(60000, SONUC_ARA * Math.pow(2, pollSonuc.fail[c] || 0));   // hata alırsa 10→20→40→60 sn
-      // Kademeli aralık (en yeni bekleyen koşuya göre; worker önbelleksiz varsayıldı): 1.5-5 dk 5 sn, 10 dk'ya kadar 10 sn, 20 dk'ya kadar 20 sn, 40 dk'ya kadar 30 sn, sonrası 60 sn
-      const yas = Math.min(...due.map(k => now - raceStart(c, +k.no).getTime()));
-      bekle = Math.max(bekle, yas < 5 * 60000 ? SONUC_ARA : yas < 10 * 60000 ? 10000 : yas < SONUC_YAVAS ? 20000 : yas < SONUC_FINAL ? 30000 : 60000);
-      if(due.every(k => raceRes(c, +k.no) && now - raceStart(c, +k.no).getTime() >= SONUC_YAVAS)) bekle = Math.max(bekle, 60000);   // sadece video bekleyenler 20 dk sonra dakikada bir; sonucu gelmeyen koşu 5 sn'de bir sorulur   // 8 dk'dan eski bekleyenler: dakikada bir (worker'ı zorlamasın)
+      // Aralık: koşu başlayalı 30 dk dolmadıysa (sonuç, ödeme, video bekleyen) 30 sn; sonrası 60 sn
+      const erken = due.some(k => now - raceStart(c, +k.no).getTime() < SONUC_YAVAS);
+      bekle = Math.max(bekle, erken ? 30000 : 60000);
+      if(due.every(k => !raceRes(c, +k.no) && now - raceStart(c, +k.no).getTime() >= SONUC_FINAL)) bekle = Math.max(bekle, 5 * 60000);   // 40 dk geçti, sonuç hâlâ yok (iptal/gecikme): 5 dk'da bir
       if(!force && now - (pollSonuc.last[c] || 0) < bekle - 300) return;   // 300 ms tolerans: 5 sn'lik ritim kaymasın
       pollSonuc.last[c] = now;
       try{
@@ -1822,6 +1827,7 @@ async function pollSonuc(force){
 // ---- AÇILIŞTA ÖDEMELER: eksik bahis ödemelerini hemen, arka arkaya en fazla 5 kez çek ----
 const odemeEksik = (c, no) => {
   const d = raceStart(c, no); if(!d) return false;
+  if(BUL.chk[c] && BUL.chk[c][no] >= 2) return false;                    // son kontrol yapıldı: tekrar sorma
   if(Date.now() - d.getTime() < SONUC_KONTROL) return false;            // koşu daha yeni bitti, ödeme yayınlanmamış olabilir
   const b = BUL.bahis[c] && BUL.bahis[c][no];
   return !raceRes(c, no) || !(b && b.length);
@@ -1923,9 +1929,10 @@ async function refreshOranlar(force, hizli){
   const key = hizli ? 'h' : 'y';
   const st = refreshOranlar[key] = refreshOranlar[key] || {};
   if(st.busy || BUL.note || !CITIES.length) return;
-  const now = Date.now(), aralik = hizli ? 5000 : 20000;
+  const now = Date.now(), aralik = hizli ? 7500 : 45000;   // hızlı: seçili koşu ~8 sn, yavaş: diğer koşular/kuponlar 45 sn
   if(!force && now - (st.t || 0) < aralik) return;
   const iso = viewIso;
+  if(iso !== TJK.bugunIso()) return;   // canlı oran sadece bugün var: geçmiş/gelecek gün için checksum.json sorma (404 üretiyordu)
   let hedefler;   // [[şehir, [koşular]]]
   if(hizli){
     if(visible() !== 'bulten' || !city || raceDone(city, race)) return;

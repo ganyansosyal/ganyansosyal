@@ -20,6 +20,7 @@ function ornOnek(ad, onekler){
 
 // Oranlar paneli ekranda mı? (visible() sekme adına bağlı kalmadan, DOM'dan bakar)
 function ornGorunuyor(){
+  if(document.hidden) return false;   // uygulama arka plandayken yenileme yapma
   const b = $('oranlar-body');
   if(!b) return false;
   try{ if(typeof visible === 'function' && visible() === 'oranlar') return true; }catch(e){}
@@ -28,7 +29,7 @@ function ornGorunuyor(){
 
 async function ornYukle(zorla){
   if(ORN.busy && Date.now() - (ORN.busyT || 0) < 40000) return;   // 40 sn'den uzun takılı kalan isteği bırak
-  if(!zorla && ORN.at && Date.now() - ORN.at < 60000 && (ORN.gun === viewIso || ORN.err)) return;
+  if(!zorla && ORN.at && Date.now() - ORN.at < 120000 && (ORN.gun === viewIso || ORN.err)) return;
   ORN.busy = true; ORN.busyT = Date.now();
   let degisti = true;
   try{
@@ -142,12 +143,15 @@ function renderOranlar(sessiz){
   box.querySelectorAll('.orn-chips').forEach((e, i) => { e.scrollLeft = kaydirTut[i] || 0; });
   ustler.forEach(([el, y]) => { el.scrollTop = y; });
   if(window.scrollY !== penY) window.scrollTo(0, penY);
-  // Açıkken dakikada bir kendini yeniler
+  // Açıkken 2,5 dakikada bir kendini yeniler
   clearTimeout(ORN.timer);
-  ORN.timer = setTimeout(() => { if(ornGorunuyor()) ornYukle(true); }, 60000);
+  ORN.timer = setTimeout(() => { if(ornGorunuyor()) ornYukle(true); }, 150000);   // oranlar 5 dk'da bir kaydedildiği için 60 sn'de bir sormak gereksiz
 }
 
 function ornSec(c, r){
   ORN.city = c; ORN.race = r;
   renderOranlar(true);
 }
+
+// Uygulama arka plandan dönünce (zamanlayıcı zinciri kopmuş olabilir) paneli yeniden başlat
+document.addEventListener('visibilitychange', () => { if(!document.hidden && ornGorunuyor()) renderOranlar(true); });
