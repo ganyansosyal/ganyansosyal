@@ -619,11 +619,12 @@ function _renderBulten(){
 }
 
 
-// Seçilmemiş atın dairesinde "+" görünür: dokununca seçileceği anlaşılsın
+// Seçilmemiş atın dairesinde ince bir "+" çizilir (yazı karakteri değil, iki çizgi): dokununca seçileceği anlaşılsın
 (function(){
   if(document.getElementById('pick-css')) return;
   const st = document.createElement('style'); st.id = 'pick-css';
-  st.textContent = '.hr .tick.add::before{content:"+";font-size:26px;font-weight:500;line-height:1;color:var(--green,#0f8a5f)}'
-    + '.hr .tick.add{display:flex;align-items:center;justify-content:center;border-color:var(--green,#0f8a5f)}';
+  st.textContent = '.hr .tick.add{display:flex;align-items:center;justify-content:center}'
+    + '.hr .tick.add::before{content:"";display:block;width:14px;height:14px;color:var(--green,#0f8a5f);opacity:.85;'
+    + 'background:linear-gradient(currentColor,currentColor) center/100% 2px no-repeat,linear-gradient(currentColor,currentColor) center/2px 100% no-repeat}';
   document.head.appendChild(st);
 })();
