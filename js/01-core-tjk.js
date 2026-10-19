@@ -1531,14 +1531,19 @@ function vidCloseModal(silent){
   document.body.classList.remove('lv-pfs-on'); clearTimeout(window._lvHT); window.liveShow = null;
   const o = $('vm'); if(!o) return;
   const v = o.querySelector('video');
-  try{ v.pause(); v.removeAttribute('src'); v.load(); }catch(e){}
-  if(silent){ o.remove(); document.body.style.overflow = ''; }
-  else {
-    // Yumuşak kapanış: önce animasyon, sonra kaldır (bu arada yeni pencere açılırsa onun kaydırma kilidi bozulmasın)
-    o.id = 'vm-out'; o.classList.add('out');
-    const bitir = () => { o.remove(); if(!$('vm')) document.body.style.overflow = ''; };
-    o.addEventListener('animationend', e => { if(e.target === o) bitir(); }, { once: true });
-    setTimeout(bitir, 320);
+  if(silent){
+    try{ v.pause(); v.removeAttribute('src'); v.load(); }catch(e){}
+    o.remove(); document.body.style.overflow = '';
+  } else {
+    // Anında kapanış: pencere hemen gizlenir (video katmanında animasyon yok, telefon takılmaz).
+    // Videoyu sökme (src boşaltma + load) ve DOM temizliği ağır olduğu için ekran çizildikten SONRA yapılır.
+    // Bu arada yeni pencere açılırsa onun kaydırma kilidi bozulmasın diye kilit sadece pencere yoksa açılır.
+    o.id = 'vm-out'; o.style.display = 'none';
+    try{ v.pause(); }catch(e){}
+    setTimeout(() => {
+      try{ v.removeAttribute('src'); v.load(); }catch(e){}
+      requestAnimationFrame(() => setTimeout(() => { o.remove(); if(!$('vm')) document.body.style.overflow = ''; }, 0));
+    }, 80);
   }
   if(!silent && _vmH){ _vmH = false; try{ history.back(); }catch(e){} }
 }
