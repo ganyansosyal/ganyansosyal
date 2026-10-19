@@ -1,6 +1,22 @@
 // ---- Genel Sohbet (canlı) ----
 // Kapalıyken sadece en son mesajı dinler (hafif); panel açılınca son 50 mesajı dinler. Mesaj sınırı: 300 karakter, 2 sn'de 1.
 let chat = {unsub: null, open: false, unread: 0, first: true, msgs: [], last: 0};
+// Saat farkı düzeltmesi: mesaj zamanı telefonun saatinden alınıyordu; saati birkaç dk ileri/geri olan kişinin mesajı yanlış sıraya düşüyordu.
+// Sitenin sunucu saati (HTTP "Date" başlığı) ile telefon saatinin farkı bulunur; 5 sn'den büyükse mesaj zamanına eklenir.
+// Sıra kuralı: yeni mesajın zamanı, ekrandaki en yeni mesajdan KÜÇÜK olamaz (en az +1 ms). Böylece telefon saati ne olursa olsun
+// bir mesaj, onu görmüş birinin yazdığı mesajın üstüne düşmez; sıra = geliş sırası.
+const chatMaxTs = () => (chat.msgs || []).reduce((a, m) => Math.max(a, m.ts || 0), 0);
+const chatNow = () => Math.max(Date.now() + (chat.off || 0), chatMaxTs());
+async function chatSaatFarki(){
+  if(chat.offT && Date.now() - chat.offT < 30 * 60000) return;   // 30 dk'da bir
+  chat.offT = Date.now();
+  try{
+    const t0 = Date.now();
+    const r = await fetch('./?_sf=' + t0, {method: 'HEAD', cache: 'no-store'});
+    const t1 = Date.now(), h = r.headers.get('date'), sv = h ? new Date(h).getTime() : 0;
+    if(sv){ const fark = Math.round((sv + 500) - (t0 + t1) / 2); chat.off = Math.abs(fark) > 5000 ? fark : 0; }
+  }catch(e){}
+}
 const CHAT_LIMIT = 50, CHAT_GAP = 2000;
 // Yerel test modu (Firebase kapalı): sohbet bu cihazda çalışır, bulutla bağlantısı yoktur
 const chatUid = () => FB_ON ? FB.uid : 'local-me';
@@ -14,9 +30,10 @@ const LOCAL_CHAT = [
 // Sohbette en son ne zaman bakıldı (bu telefonda, kullanıcıya özel): uygulama kapalıyken gelen mesajlar da sayılsın
 const _seenKey = () => 'gs-chat-seen-' + ((typeof FB !== 'undefined' && FB.uid) || 'x');
 function chatSeenGet(){ try{ return Number(localStorage.getItem(_seenKey())) || 0; }catch(e){ return 0; } }
-function chatSeenSet(t){ try{ localStorage.setItem(_seenKey(), String(t || Date.now())); }catch(e){} }
+function chatSeenSet(t){ try{ localStorage.setItem(_seenKey(), String(t || chatNow())); }catch(e){} }
 function chatListen(full){
   if(!FB_ON){ if(full){ chat.msgs = LOCAL_CHAT.slice(); renderChat(); } return; }
+  chatSaatFarki();
   if(chat.unsub){ try{ chat.unsub(); }catch(e){} chat.unsub = null; }
   if(!FB.uid || !FB.db) return;
   chat.first = true;
@@ -26,7 +43,7 @@ function chatListen(full){
       renderChat();
     }else{
       let seen = chatSeenGet();
-      if(!seen){ seen = Date.now(); chatSeenSet(seen); }   // ilk kurulum: eski mesajlar okunmamış sayılmasın
+      if(!seen){ seen = chatNow(); chatSeenSet(seen); }   // ilk kurulum: eski mesajlar okunmamış sayılmasın
       chat.unread = sn.docs.filter(d => { const m = d.data(); return m.uid !== FB.uid && (m.ts || 0) > seen; }).length;
       chat.first = false;
       chatBadge();
@@ -101,7 +118,7 @@ let _chH = false;   // sohbet penceresinin geçmiş (geri tuşu) kaydı var mı
 function openChat(){
   if(!chatOK()) return;
   if(!_chH){ try{ history.pushState({gschat: 1}, ''); _chH = true; }catch(e){} }
-  chat.open = true; chat.unread = 0; chatSeenSet(Date.now()); chatBadge();
+  chat.open = true; chat.unread = 0; chatSeenSet(chatNow()); chatBadge();
   $('chsheet').classList.remove('hidden'); $('chat-fab').classList.add('hidden');
   if(chat.msgs && chat.msgs.length) renderChat(); else $('ch-list').innerHTML = '<div class="ch-empty">Yükleniyor…</div>';   // önceki mesajlar anında, güncel liste arkadan gelir
   chatListen(true);
@@ -111,7 +128,7 @@ function openChat(){
 function closeChat(silent){
   if(!chat.open) return;
   if(_chH){ _chH = false; if(silent !== true){ try{ history.back(); }catch(e){} } }
-  chat.open = false; chatSeenSet(Date.now()); cancelChatEdit(); clearChatReply(); $('chsheet').classList.add('hidden'); chatFitReset();
+  chat.open = false; chatSeenSet(chatNow()); cancelChatEdit(); clearChatReply(); $('chsheet').classList.add('hidden'); chatFitReset();
   if(chatOK()){ $('chat-fab').classList.remove('hidden'); chatListen(false); }
 }
 const _chDayF = new Intl.DateTimeFormat('tr-TR', {day: 'numeric', month: 'long'});
@@ -162,7 +179,7 @@ function sendChat(){
   chat.last = now; inp.value = '';
   const rp = chat.reply ? {id: chat.reply.id, n: chat.reply.n, t: chat.reply.t} : null; clearChatReply();
   if(!FB_ON){ LOCAL_CHAT.push(Object.assign({id:'l' + now, uid:'local-me', n: USERS[ME].name, t, ts: now}, rp ? {r: rp} : {})); chat.msgs = LOCAL_CHAT.slice(); renderChat(); inp.focus({preventScroll: true}); return; }
-  FB.db.collection('chat').add(Object.assign({uid: FB.uid, n: USERS[ME].name, t, ts: now}, rp ? {r: rp} : {})).catch(e => showToast('Mesaj gönderilemedi: ' + fbErr(e)));
+  FB.db.collection('chat').add(Object.assign({uid: FB.uid, n: USERS[ME].name, t, ts: Math.max(now + (chat.off || 0), chatMaxTs() + 1)}, rp ? {r: rp} : {})).catch(e => showToast('Mesaj gönderilemedi: ' + fbErr(e)));
   inp.focus({preventScroll: true});
 }
 function startChatEdit(id){
