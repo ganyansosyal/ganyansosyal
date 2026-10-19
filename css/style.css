@@ -3148,3 +3148,27 @@ nav button.nav-set .ni:after{animation:none!important}
 .vm-me .nm span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vm-me .nm small{font-size:10.5px;font-weight:800;color:#c4b5fd}
 .vm-res .me{background:rgba(124,58,237,.24);outline:1px solid rgba(167,139,250,.7)}
+.idm-ld{opacity:.75}
+.idm-rt{display:block;margin:10px 12px 0;padding:9px 12px;border:0;border-radius:10px;background:rgba(255,255,255,.09);color:#e8eefc;font-family:inherit;font-weight:700;font-size:12px;cursor:pointer}
+
+/* Video penceresi: yumuşak açılış/kapanış, içerik sırayla belirir */
+@keyframes vmFade{from{opacity:0}to{opacity:1}}
+@keyframes vmUp{from{opacity:0;transform:translateY(34px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes vmDown{from{opacity:1;transform:none}to{opacity:0;transform:translateY(34px) scale(.985)}}
+@keyframes vmIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes vmPop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}
+.vm{animation:vmFade .22s ease-out both}
+.vm .vm-s{animation:vmUp .3s cubic-bezier(.2,.9,.3,1) both}
+.vm.out{animation:vmFade .2s ease-in reverse both;pointer-events:none}
+.vm.out .vm-s{animation:vmDown .2s ease-in both}
+.vm video{animation:vmFade .35s ease-out both}
+.vm-me,.vm .vm-rt,.idm-rt{animation:vmIn .32s ease-out .08s both}
+.vm-res > div{animation:vmIn .3s ease-out both}
+.vm-res > div:nth-child(1){animation-delay:.04s}
+.vm-res > div:nth-child(2){animation-delay:.1s}
+.vm-res > div:nth-child(3){animation-delay:.16s}
+.vm-res > div:nth-child(4){animation-delay:.22s}
+.vm-me .sc{animation:vmPop .35s ease-out both}
+.vm .idm-ld{animation:vmIn .3s ease-out both,vmPulse 1.2s ease-in-out .4s infinite}
+@keyframes vmPulse{0%,100%{opacity:.5}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.vm,.vm .vm-s,.vm.out,.vm.out .vm-s,.vm video,.vm-me,.vm .vm-rt,.idm-rt,.vm-res > div,.vm-me .sc,.idm-ld{animation:none!important}}
