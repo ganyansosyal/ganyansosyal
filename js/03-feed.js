@@ -589,33 +589,44 @@ nav,.top,#bul-sticky,.tvcard,.pstick{box-shadow:none!important}
 #tab-bulten .hr{box-shadow:none!important}
 #tab-bulten .chip.on,#tab-bulten .chip:active{box-shadow:none!important}
 .tk-t{will-change:auto!important}
-/* Tahmin Yap alt kupon paneli: alt menüye yaslı, tam genişlik, 3 satırlık yoğun çubuk (Seçimler / özet / misli + Paylaş) */
-#draft.dr{left:0!important;right:0!important;max-width:500px!important;margin:0 auto!important;bottom:var(--navH,56px)!important;background:var(--ac)!important;color:var(--on)!important;border:0!important;border-radius:18px 18px 0 0!important;padding:0 0 12px!important;gap:0!important;box-shadow:none!important;animation:none!important;display:flex;flex-wrap:wrap;align-items:center;overflow:hidden}
+/* Tahmin Yap kupon çubuğu: koyu lacivert zemin, nane yeşili vurgu; üstte ayak çipleri, altta fiyat · misli · Paylaş */
+#draft.dr{--dk:#0E1F2B;--mint:#2DD4A0;--mint-on:#052A1E;left:0!important;right:0!important;max-width:500px!important;margin:0 auto!important;bottom:0!important;background:var(--dk)!important;color:#fff!important;border:0!important;border-top:1px solid rgba(255,255,255,.08)!important;border-radius:22px 22px 0 0!important;padding:10px clamp(10px,4vw,14px) calc(12px + env(safe-area-inset-bottom,0px))!important;box-shadow:none!important;animation:none!important;overflow:hidden;
+  display:grid!important;grid-template-columns:minmax(clamp(88px,27vw,100px),max-content) auto auto minmax(60px,1fr);column-gap:clamp(5px,2vw,8px);row-gap:10px;align-items:center}
+html[data-theme=dark] #draft.dr{--dk:#18213A}
 #draft.dr.hidden{display:none!important}
 #draft button{background:transparent;color:inherit;transform:none!important}
-#draft #sel-sum{order:0;flex:1 1 100%;margin:0!important;padding:7px 12px!important;min-height:0!important;visibility:visible!important;display:flex;justify-content:space-between;align-items:center;background:color-mix(in srgb,var(--on) 14%,transparent);font-size:12.5px;color:var(--on);border:0}
-#draft #sel-sum b{color:var(--on);opacity:.8;font-weight:700}
-#draft #sel-sum span span{color:var(--on)!important;font-weight:800;letter-spacing:.2px}
-#draft #sel-sum button{color:var(--on)!important;background:color-mix(in srgb,var(--on) 18%,transparent)!important;border-radius:8px!important;padding:2px 9px!important;font-size:11.5px;font-weight:800}
-#draft .dr-l{order:1;flex:1 1 100%;min-width:0;display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 12px 6px}
-#draft .dr-l small{color:var(--on);opacity:.88;font-size:12.5px;font-weight:700}
-#draft .dr-l b{color:var(--on);font-size:16px;font-weight:800;letter-spacing:-.2px;line-height:1.1}
+#draft #sel-sum{grid-row:1;grid-column:1/-1;margin:0!important;padding:0!important;min-height:0!important;visibility:visible!important;display:flex;align-items:center;justify-content:space-between;gap:10px;background:none;border:0;color:#fff;font-size:12px;min-width:0}
+#draft #sel-sum>span{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
+#draft #sel-sum>span>b{flex:none;color:rgba(255,255,255,.55);font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
+#draft #sel-sum>span>span{color:var(--mint)!important;font-weight:800;font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#draft #sel-sum .dcps{display:flex!important;gap:5px;overflow-x:auto;scrollbar-width:none;min-width:0;max-width:100%}
+#draft #sel-sum .dcps::-webkit-scrollbar{display:none}
+#draft #sel-sum>span:has(.dcps)>b{display:none}
+#draft #sel-sum .dcp{flex:none;box-sizing:border-box;min-width:32px;height:28px;padding:0 8px;border-radius:9px;display:grid;place-items:center;font-style:normal;font-size:12.5px;font-weight:800;color:var(--mint);background:color-mix(in srgb,var(--mint) 16%,transparent);border:1px solid color-mix(in srgb,var(--mint) 45%,transparent)}
+#draft #sel-sum .dcp.e{color:rgba(255,255,255,.4);background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);font-weight:600}
+#draft #sel-sum button{flex:none;color:rgba(255,255,255,.75)!important;background:rgba(255,255,255,.08)!important;border-radius:9px!important;padding:5px 11px!important;font-size:11.5px;font-weight:700}
+#draft .dr-l{grid-row:2;grid-column:1;display:block;min-width:0;padding:0}
+#draft .dr-l small{display:block;width:0;min-width:100%;overflow:hidden;text-overflow:ellipsis;font-size:clamp(10px,3vw,11px)!important;color:rgba(255,255,255,.6);opacity:1;font-size:11px;font-weight:600;line-height:1.2;white-space:nowrap}
+#draft .dr-l b{display:block;overflow:hidden;text-overflow:ellipsis;color:var(--mint);font-size:clamp(16px,5vw,20px);font-weight:800;letter-spacing:-.4px;line-height:1.15;white-space:nowrap}
 #draft .dr-f{display:contents}
 #draft .dr-f #coupon-formula{display:none}
-#draft .dr-nb{order:2;margin-left:12px;background:color-mix(in srgb,var(--on) 18%,transparent)!important;color:var(--on)!important;border-radius:11px!important;padding:0 11px!important;height:38px;font-size:12px;font-weight:800;white-space:nowrap}
-#draft .dr-step{order:3;margin-left:8px;background:color-mix(in srgb,var(--on) 18%,transparent)!important;color:var(--on)!important;border-radius:11px!important;padding:2px!important}
-#draft .dr-step button{color:var(--on)!important;background:transparent!important;width:30px;height:34px}
-#draft .dr-step input{color:var(--on)!important;width:38px}
-#draft .dr-go{order:4;flex:1 1 0;margin:0 12px 0 8px;background:var(--on)!important;color:var(--ac)!important;border-radius:12px!important;height:38px;padding:0 14px!important;font-size:14px;font-weight:800}
-#draft .dr-go.off{background:color-mix(in srgb,var(--on) 28%,transparent)!important;color:var(--on)!important;opacity:1}
-#draft .dr-note{order:5;flex:1 1 100%;margin:8px 12px 0;box-shadow:none!important;background:var(--sf)!important;border:0!important;color:var(--tx)!important;border-radius:11px!important;padding:9px 12px!important}
+#draft .dr-nb{grid-row:2;grid-column:2;width:clamp(36px,11vw,42px);height:44px;padding:0!important;font-size:0!important;background:rgba(255,255,255,.08)!important;border-radius:14px!important;display:flex;align-items:center;justify-content:center;color:#fff!important}
+#draft .dr-nb::before{content:"";width:19px;height:19px;background:rgba(255,255,255,.85);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E") center/contain no-repeat}
+body.note-open #draft .dr-nb{background:color-mix(in srgb,var(--mint) 22%,transparent)!important}
+body.note-open #draft .dr-nb::before{background:var(--mint)}
+#draft .dr-step{grid-row:2;grid-column:3;background:rgba(255,255,255,.08)!important;color:#fff!important;border-radius:14px!important;padding:2px!important;height:44px;box-sizing:border-box}
+#draft .dr-step button{color:#fff!important;background:transparent!important;width:clamp(26px,8vw,30px);height:40px;font-size:19px}
+#draft .dr-step input{background:transparent!important;border:0!important;box-shadow:none!important;color:#fff!important;width:clamp(26px,8vw,34px);text-align:center;height:40px;font-size:15px}
+#draft .dr-go{grid-row:2;grid-column:4;height:44px;padding:0 clamp(8px,3vw,14px)!important;border-radius:14px!important;background:var(--mint)!important;color:var(--mint-on)!important;font-size:clamp(13px,4vw,15px);font-weight:800;letter-spacing:-.1px}
+#draft .dr-go.off{background:rgba(255,255,255,.1)!important;color:rgba(255,255,255,.45)!important;opacity:1}
+#draft .dr-note{grid-row:3;grid-column:1/-1;margin:0;box-shadow:none!important;background:rgba(255,255,255,.08)!important;border:1px solid rgba(255,255,255,.12)!important;color:#fff!important;border-radius:12px!important;padding:10px 12px!important}
+#draft .dr-note::placeholder{color:rgba(255,255,255,.5)!important;opacity:1}
 #draft .dr-note.hidden{display:none!important}
 /* Tahmin Yap'ta alt menü ve sohbet balonu yok: ekran tamamen koşulara kalır; geri dönüş üstteki ok ve telefonun geri tuşuyla */
 body[data-tab="bulten"] nav,body[data-tab="bulten"] #chat-fab{display:none!important}
-body[data-tab="bulten"] #draft.dr{bottom:0!important;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))!important}
 body[data-tab="bulten"] .app{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))!important}
-body[data-tab="bulten"].has-draft .app{padding-bottom:calc(125px + env(safe-area-inset-bottom,0px))!important}
-body[data-tab="bulten"].has-draft.note-open .app{padding-bottom:calc(175px + env(safe-area-inset-bottom,0px))!important}
+body[data-tab="bulten"].has-draft .app{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))!important}
+body[data-tab="bulten"].has-draft.note-open .app{padding-bottom:calc(172px + env(safe-area-inset-bottom,0px))!important}
 /* Performans: ekran dışındaki kartlar çizilmez, sohbet satırları ayrı katman olmaz */
 #posts-container .card{content-visibility:auto;contain-intrinsic-size:auto 460px}
 .ch-m{will-change:auto!important}
@@ -1117,4 +1128,19 @@ window.addEventListener('load', () => {
   }
   new MutationObserver(paint).observe(document.body, {attributes: true, attributeFilter: ['data-tab']});
   paint();
+})();
+
+/* Seçimler satırı: ayak çipleri (1. ayak, 2. ayak ...) */
+(function(){
+  const sm = document.getElementById('sel-sum'); if(!sm) return;
+  function chips(){
+    const inner = sm.querySelector(':scope > span > span'); if(!inner || inner.dataset.cp) return;
+    const t = inner.textContent;
+    if(t.indexOf(' / ') < 0){ inner.dataset.cp = '1'; return; }
+    inner.dataset.cp = '1';
+    inner.className = 'dcps'; inner.removeAttribute('style');
+    inner.innerHTML = t.split(' / ').map(x => { x = x.trim(); const e = !x || x === '-'; return '<i class="dcp' + (e ? ' e' : '') + '">' + (e ? '–' : x.replace(/[<>&]/g, '')) + '</i>'; }).join('');
+  }
+  new MutationObserver(chips).observe(sm, {childList: true});
+  chips();
 })();
