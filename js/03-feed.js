@@ -590,10 +590,10 @@ nav,.top,#bul-sticky,.tvcard,.pstick{box-shadow:none!important}
 #tab-bulten .chip.on,#tab-bulten .chip:active{box-shadow:none!important}
 .tk-t{will-change:auto!important}
 /* Tahmin Yap alt kupon paneli: alt menüye yaslı, tam genişlik, 3 satırlık yoğun çubuk (Seçimler / özet / misli + Paylaş) */
-#draft.dr{left:0!important;right:0!important;max-width:500px!important;margin:0 auto!important;bottom:var(--navH,56px)!important;background:color-mix(in srgb,var(--ac) 90%,#064e3b)!important;color:var(--on)!important;border:0!important;border-radius:18px 18px 0 0!important;padding:0 0 12px!important;gap:0!important;box-shadow:none!important;animation:none!important;display:flex;flex-wrap:wrap;align-items:center;overflow:hidden}
+#draft.dr{left:0!important;right:0!important;max-width:500px!important;margin:0 auto!important;bottom:var(--navH,56px)!important;background:var(--ac)!important;color:var(--on)!important;border:0!important;border-radius:18px 18px 0 0!important;padding:0 0 12px!important;gap:0!important;box-shadow:none!important;animation:none!important;display:flex;flex-wrap:wrap;align-items:center;overflow:hidden}
 #draft.dr.hidden{display:none!important}
 #draft button{background:transparent;color:inherit;transform:none!important}
-#draft #sel-sum{order:0;flex:1 1 100%;margin:0!important;padding:7px 12px!important;min-height:0!important;visibility:visible!important;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.16);font-size:12.5px;color:var(--on);border:0}
+#draft #sel-sum{order:0;flex:1 1 100%;margin:0!important;padding:7px 12px!important;min-height:0!important;visibility:visible!important;display:flex;justify-content:space-between;align-items:center;background:color-mix(in srgb,var(--on) 14%,transparent);font-size:12.5px;color:var(--on);border:0}
 #draft #sel-sum b{color:var(--on);opacity:.8;font-weight:700}
 #draft #sel-sum span span{color:var(--on)!important;font-weight:800;letter-spacing:.2px}
 #draft #sel-sum button{color:var(--on)!important;background:color-mix(in srgb,var(--on) 18%,transparent)!important;border-radius:8px!important;padding:2px 9px!important;font-size:11.5px;font-weight:800}
@@ -607,11 +607,15 @@ nav,.top,#bul-sticky,.tvcard,.pstick{box-shadow:none!important}
 #draft .dr-step button{color:var(--on)!important;background:transparent!important;width:30px;height:34px}
 #draft .dr-step input{color:var(--on)!important;width:38px}
 #draft .dr-go{order:4;flex:1 1 0;margin:0 12px 0 8px;background:var(--on)!important;color:var(--ac)!important;border-radius:12px!important;height:38px;padding:0 14px!important;font-size:14px;font-weight:800}
-#draft .dr-go.off{opacity:.6}
+#draft .dr-go.off{background:color-mix(in srgb,var(--on) 28%,transparent)!important;color:var(--on)!important;opacity:1}
 #draft .dr-note{order:5;flex:1 1 100%;margin:8px 12px 0;box-shadow:none!important;background:var(--sf)!important;border:0!important;color:var(--tx)!important;border-radius:11px!important;padding:9px 12px!important}
 #draft .dr-note.hidden{display:none!important}
-body[data-tab="bulten"] .app{padding-bottom:calc(180px + env(safe-area-inset-bottom,0px))!important}
-body[data-tab="bulten"].note-open .app{padding-bottom:calc(230px + env(safe-area-inset-bottom,0px))!important}
+/* Tahmin Yap'ta alt menü ve sohbet balonu yok: ekran tamamen koşulara kalır; geri dönüş üstteki ok ve telefonun geri tuşuyla */
+body[data-tab="bulten"] nav,body[data-tab="bulten"] #chat-fab{display:none!important}
+body[data-tab="bulten"] #draft.dr{bottom:0!important;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))!important}
+body[data-tab="bulten"] .app{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))!important}
+body[data-tab="bulten"].has-draft .app{padding-bottom:calc(125px + env(safe-area-inset-bottom,0px))!important}
+body[data-tab="bulten"].has-draft.note-open .app{padding-bottom:calc(175px + env(safe-area-inset-bottom,0px))!important}
 /* Performans: ekran dışındaki kartlar çizilmez, sohbet satırları ayrı katman olmaz */
 #posts-container .card{content-visibility:auto;contain-intrinsic-size:auto 460px}
 .ch-m{will-change:auto!important}
@@ -1098,4 +1102,19 @@ window.addEventListener('load', () => {
   window.addEventListener('resize', set);
   window.addEventListener('load', set);
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(set);
+})();
+
+/* Tahmin Yap'ta menü düğmesi geri okuna döner (Akış'a götürür) */
+(function(){
+  const b = document.getElementById('menu-btn'); if(!b) return;
+  const menuHtml = b.innerHTML, ARROW = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
+  let mode = '';
+  function paint(){
+    const m = document.body.dataset.tab === 'bulten' ? 'back' : 'menu';
+    if(m === mode) return; mode = m;
+    if(m === 'back'){ b.innerHTML = ARROW; b.setAttribute('aria-label', 'Akışa dön'); b.setAttribute('onclick', "switchTab('feed')"); }
+    else { b.innerHTML = menuHtml || b.innerHTML; b.setAttribute('aria-label', 'Menü'); b.setAttribute('onclick', 'openDrawer()'); }
+  }
+  new MutationObserver(paint).observe(document.body, {attributes: true, attributeFilter: ['data-tab']});
+  paint();
 })();

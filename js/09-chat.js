@@ -371,6 +371,7 @@ else if(AUTH_API){
       else sh.classList.add('hidden');
       guard(); return;
     }
+    if(document.body.dataset.tab === 'bulten'){ guard(); try{ switchTab('feed'); }catch(e){} return; }   // Tahmin Yap'ta geri tuşu: önce Akış'a döner
     guard(); askExit();
   });
 })();
