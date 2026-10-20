@@ -557,6 +557,7 @@ function renderFeedNow(){
   peopleStrip();
   const F = [
     ['all','Akış'],
+    ['mine','Paylaştıklarım'],
     ['follow','Takip Ettiklerim'],
     ['winners','Tutanlar'],
     ['tracked','Kupon Takip']
@@ -566,14 +567,15 @@ function renderFeedNow(){
   $('draft-chips').innerHTML = selList().length ? '<div class="cmp-hint">Kuponun notunla birlikte paylaşılacak</div>' + couponHtml(buildCoupon(), true) : '';
   
   const fiso = feedIso();
-  const base = filter === 'tracked' ? posts.filter(p => !p.hidden) : posts.filter(p => !p.hidden && postDay(p) === fiso);   // Kupon Takip: günden bağımsız
+  const base = (filter === 'tracked' || filter === 'mine') ? posts.filter(p => !p.hidden) : posts.filter(p => !p.hidden && postDay(p) === fiso);   // Kupon Takip ve Paylaştıklarım: günden bağımsız
   let l = base;
   if(filter === 'banko') l = base.filter(p => p.banko || /banko/i.test(p.text));
   if(filter === 'kupon') l = base.filter(p => p.coupon).sort((a,b) => b.likes - a.likes);
   if(filter === 'winners') l = base.filter(isWon);
   if(filter === 'tracked') l = base.filter(p => p.coupon && p.author !== ME && tracked[tk(p)]);
   if(filter === 'follow') l = base.filter(p => following[p.author]);
-  if(filter !== 'tracked') l = l.filter(p => !isLost(p));   // Kaybeden kuponlar akıştan kalkar (profilde görünmeye devam eder); Kupon Takip'te kalır
+  if(filter === 'mine') l = base.filter(p => p.author === ME);   // Kendi paylaşımların: tutmayanlar da burada kalır
+  if(filter !== 'tracked' && filter !== 'mine') l = l.filter(p => !isLost(p));   // Kaybeden kuponlar akıştan kalkar (profilde görünmeye devam eder); Kupon Takip'te kalır
   if(filter === 'all' || filter === 'follow') l = l.filter(p => !isWon(p));   // Tutan kuponlar sadece Tutanlar sekmesinde; akışta yeni, bekleyen ve devam eden kuponlar kalır
   // Sıralama: en iyiden en kötüye. Tuttu > devam ediyor (çok ayak tutan önce) > bekliyor > kaybetti > kuponsuz yazılar.
   // Eşitlikte: kupon puanı, sonra beğeni + yorum, sonra yeni olan önce.
@@ -582,9 +584,9 @@ function renderFeedNow(){
   const rk = p => { try{ return p.coupon ? (RANK[pst(p)] || 2) : 0; }catch(e){ return 0; } };
   const hits = p => { try{ return p.coupon ? status(p.coupon).h : 0; }catch(e){ return 0; } };
   const cpts = p => { try{ return p.coupon ? couponPts(p.coupon) || 0 : 0; }catch(e){ return 0; } };
-  l = l.slice().sort((a, b) => rk(b) - rk(a) || hits(b) - hits(a) || cpts(b) - cpts(a) || eng(b) - eng(a) || (b.ts || 0) - (a.ts || 0));
+  l = l.slice().sort(filter === 'mine' ? ((a, b) => (b.ts || 0) - (a.ts || 0)) : (a, b) => rk(b) - rk(a) || hits(b) - hits(a) || cpts(b) - cpts(a) || eng(b) - eng(a) || (b.ts || 0) - (a.ts || 0));
   
-  const feedHtml = l.length ? l.map(postHtml).join('') : `<div class="empty">${filter==='follow' ? 'Takip ettiğin kimsenin paylaşımı yok. Yukarıdan tahmincileri takip edebilirsin.' : (filter==='all' ? (fiso === TJK.bugunIso() ? 'Henüz paylaşım yok. İlk kuponunu sen paylaş!' : 'Bu tarih için paylaşım yok.') : filter==='tracked' ? 'Henüz takip ettiğin kupon yok. Başkasının kuponunda "Kuponu takip et" butonuna basarak buraya ekleyebilirsin.' : 'Bu filtrede henüz paylaşım yok.')}</div>`;
+  const feedHtml = l.length ? l.map(postHtml).join('') : `<div class="empty">${filter==='follow' ? 'Takip ettiğin kimsenin paylaşımı yok. Yukarıdan tahmincileri takip edebilirsin.' : (filter==='all' ? (fiso === TJK.bugunIso() ? 'Henüz paylaşım yok. İlk kuponunu sen paylaş!' : 'Bu tarih için paylaşım yok.') : filter==='mine' ? 'Henüz bir şey paylaşmadın. Paylaştığın kuponlar, tutmasa bile burada durur.' : filter==='tracked' ? 'Henüz takip ettiğin kupon yok. Başkasının kuponunda "Kuponu takip et" butonuna basarak buraya ekleyebilirsin.' : 'Bu filtrede henüz paylaşım yok.')}</div>`;
   // Resimler görününce yüklensin (kaydırdıkça), çizimi bloklamasın
   $('posts-container').innerHTML = feedHtml.replace(/<img(?![^>]*\bloading=)/g, '<img loading="lazy" decoding="async"');
 }
