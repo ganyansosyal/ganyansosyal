@@ -274,22 +274,30 @@ else if(AUTH_API){
 (function(){
   const mini=document.getElementById('ri-mini'), card=document.querySelector('#tab-bulten .ri');
   if(!mini||!card) return;
-  let tk=false;
+  let tk=false, hh=0, lastTop='', lastOn=null;
+  // Yükseklikler sadece boyut değişince ölçülür; kaydırırken sadece tek okuma yapılır (düzen hesabı zorlanmaz)
+  function measure(){
+    const hdr=document.querySelector('.top'), sw=document.getElementById('bul-sticky');
+    hh=(hdr?hdr.offsetHeight:52)+(sw?sw.offsetHeight:0);
+    const t=hh+'px'; if(t!==lastTop){ mini.style.top=t; lastTop=t; }
+  }
   function upd(){
     tk=false;
-    const hdr=document.querySelector('.top'), sw=document.getElementById('bul-sticky'), hh=(hdr?hdr.offsetHeight:52)+(sw?sw.offsetHeight:0);
-    mini.style.top=hh+'px';
+    if(!hh) measure();
     const r=card.getBoundingClientRect();
     const on=r.height>0 && r.bottom<hh+4;
     if(on){
-      document.getElementById('ri-mini-t').textContent=document.getElementById('race-title').textContent;
-      const n=(document.getElementById('race-meta').querySelector('.rbn')||{}).textContent||'';
-      document.getElementById('ri-mini-n').textContent=n;
+      const t=document.getElementById('race-title').textContent, n=(document.getElementById('race-meta').querySelector('.rbn')||{}).textContent||'';
+      const et=document.getElementById('ri-mini-t'), en=document.getElementById('ri-mini-n');
+      if(et.textContent!==t) et.textContent=t; if(en.textContent!==n) en.textContent=n;
     }
+    if(on===lastOn) return;
+    lastOn=on;
     mini.classList.toggle('show',on);
   }
   addEventListener('scroll',()=>{if(!tk){tk=true;requestAnimationFrame(upd);}},{passive:true});
-  addEventListener('resize',upd);
+  addEventListener('resize',()=>{hh=0;lastOn=null;upd();});
+  setInterval(()=>{ if(!document.hidden && $('tab-bulten') && !$('tab-bulten').classList.contains('hidden')){ const o=hh; hh=0; measure(); if(o!==hh) upd(); } },2000);
 })();
 
 /* Otomatik güncelleme: sayfa açılınca arka planda sürüm kontrolü, yeni sürüm varsa kendiliğinden yenilenir */

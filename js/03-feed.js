@@ -552,7 +552,9 @@ function injectFilterStyle(){
   const st = document.createElement('style');
   st.id = 'filters-style';
   st.textContent = `
-*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+*,*::before,*::after{animation:none!important;animation-duration:0s!important;transition:none!important;scroll-behavior:auto!important}
+.maint-ov *,.maint-ov *::before,.maint-ov *::after{animation:none!important}
+#ri-mini,.sheet-card,.cms-ov,.sheet{animation:none!important;transition:none!important}
 .nf-flash,.nf-flash::before,.nf-flash::after{animation:revert!important}
 #filters{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:8px!important;overflow:visible!important;padding:0!important;margin:10px 0 14px!important;border:0!important;background:transparent!important;box-shadow:none!important}
 #filters .chip{--ac:#10b981;position:relative;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:clamp(4px,1.6vw,7px)!important;width:100%!important;min-width:0!important;height:clamp(40px,11.5vw,46px)!important;padding:0 clamp(4px,1.8vw,10px)!important;margin:0!important;border:1px solid rgba(127,127,127,.18)!important;border-radius:14px!important;background:#fff!important;color:inherit!important;font-size:clamp(11px,3.3vw,13px)!important;font-weight:600!important;line-height:1!important;letter-spacing:-.2px;white-space:nowrap!important;box-shadow:0 1px 2px rgba(15,23,42,.04)!important;transform:none!important;-webkit-tap-highlight-color:transparent}
@@ -572,6 +574,14 @@ function injectFilterStyle(){
 #filters .f-tracked{--ac:#0ea5e9}
 [data-theme="dark"] #filters .chip,.dark #filters .chip{background:#1b2230!important}
 [data-theme="dark"] #filters .chip.on,.dark #filters .chip.on{background:color-mix(in srgb,var(--ac) 18%,transparent)!important;color:#fff!important}
+/* At kartı: dokununca / Detay açıp kapatınca parlama (ışık) yok */
+.hr,.hr *{-webkit-tap-highlight-color:transparent!important}
+.hr:active{background:var(--sf)!important}
+.hr.on:active{background:color-mix(in srgb,var(--ac) 12%,var(--sf))!important}
+.hr.nr:active{background:color-mix(in srgb,var(--ln) 40%,var(--sf))!important}
+.hdet:active,.hmore:active,.hd-s:active,.hm-s:active,.hm-b:active{background:none!important;filter:none!important;box-shadow:none!important}
+.hd-s:focus,.hm-s:focus,.hd-s:focus-visible,.hm-s:focus-visible{outline:none!important;background:none!important}
+.hm-b::after,.hd-s::after,.hm-p,.hm-o{transition:none!important}
 /* Performans: ekran dışındaki kartlar çizilmez, sohbet satırları ayrı katman olmaz */
 #posts-container .card{content-visibility:auto;contain-intrinsic-size:auto 460px}
 .ch-m{will-change:auto!important}
