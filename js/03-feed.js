@@ -589,38 +589,42 @@ nav,.top,#bul-sticky,.tvcard,.pstick{box-shadow:none!important}
 #tab-bulten .hr{box-shadow:none!important}
 #tab-bulten .chip.on,#tab-bulten .chip:active{box-shadow:none!important}
 .tk-t{will-change:auto!important}
+/* Tahmin Yap'ta geri butonu: yeşil, ok + "Geri" yazısı (menü düğmesiyle karışmasın) */
+body[data-tab="bulten"] #menu-btn{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:1px!important;color:#059669!important;border:1.5px solid #059669!important;background:#ecfdf5!important}
+body[data-tab="bulten"] #menu-btn .bk-t{font-size:10.5px;font-weight:800;line-height:1;letter-spacing:-.1px}
+html[data-theme=dark] body[data-tab="bulten"] #menu-btn{background:color-mix(in srgb,#10b981 16%,transparent)!important;color:#34d399!important;border-color:#34d399!important}
 /* Tahmin Yap kupon çubuğu: koyu lacivert zemin, nane yeşili vurgu; üstte ayak çipleri, altta fiyat · misli · Paylaş */
-#draft.dr{--dk:#0E1F2B;--mint:#2DD4A0;--mint-on:#052A1E;left:0!important;right:0!important;max-width:500px!important;margin:0 auto!important;bottom:0!important;background:var(--dk)!important;color:#fff!important;border:0!important;border-top:1px solid rgba(255,255,255,.08)!important;border-radius:22px 22px 0 0!important;padding:10px clamp(10px,4vw,14px) calc(12px + env(safe-area-inset-bottom,0px))!important;box-shadow:none!important;animation:none!important;overflow:hidden;
+#draft.dr{--dk:#FFFFFF;--mint:#059669;--mint-on:#FFFFFF;--tx:#0f172a;left:0!important;right:0!important;max-width:500px!important;margin:0 auto!important;bottom:0!important;background:var(--dk)!important;color:var(--tx,#0f172a)!important;border:0!important;border-top:1px solid rgba(15,23,42,.1)!important;border-radius:22px 22px 0 0!important;padding:10px clamp(10px,4vw,14px) calc(12px + env(safe-area-inset-bottom,0px))!important;box-shadow:0 -6px 20px rgba(15,23,42,.10)!important;animation:none!important;overflow:hidden;
   display:grid!important;grid-template-columns:minmax(clamp(88px,27vw,100px),max-content) auto auto minmax(60px,1fr);column-gap:clamp(5px,2vw,8px);row-gap:10px;align-items:center}
-html[data-theme=dark] #draft.dr{--dk:#18213A}
+html[data-theme=dark] #draft.dr{--dk:#FFFFFF}
 #draft.dr.hidden{display:none!important}
 #draft button{background:transparent;color:inherit;transform:none!important}
-#draft #sel-sum{grid-row:1;grid-column:1/-1;margin:0!important;padding:0!important;min-height:0!important;visibility:visible!important;display:flex;align-items:center;justify-content:space-between;gap:10px;background:none;border:0;color:#fff;font-size:12px;min-width:0}
+#draft #sel-sum{grid-row:1;grid-column:1/-1;margin:0!important;padding:0!important;min-height:0!important;visibility:visible!important;display:flex;align-items:center;justify-content:space-between;gap:10px;background:none;border:0;color:var(--tx,#0f172a);font-size:12px;min-width:0}
 #draft #sel-sum>span{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
-#draft #sel-sum>span>b{flex:none;color:rgba(255,255,255,.55);font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
+#draft #sel-sum>span>b{flex:none;color:rgba(15,23,42,.6);font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
 #draft #sel-sum>span>span{color:var(--mint)!important;font-weight:800;font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #draft #sel-sum .dcps{display:flex!important;gap:5px;overflow-x:auto;scrollbar-width:none;min-width:0;max-width:100%}
 #draft #sel-sum .dcps::-webkit-scrollbar{display:none}
 #draft #sel-sum>span:has(.dcps)>b{display:none}
 #draft #sel-sum .dcp{flex:none;box-sizing:border-box;min-width:32px;height:28px;padding:0 8px;border-radius:9px;display:grid;place-items:center;font-style:normal;font-size:12.5px;font-weight:800;color:var(--mint);background:color-mix(in srgb,var(--mint) 16%,transparent);border:1px solid color-mix(in srgb,var(--mint) 45%,transparent)}
-#draft #sel-sum .dcp.e{color:rgba(255,255,255,.4);background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);font-weight:600}
-#draft #sel-sum button{flex:none;color:rgba(255,255,255,.75)!important;background:rgba(255,255,255,.08)!important;border-radius:9px!important;padding:5px 11px!important;font-size:11.5px;font-weight:700}
+#draft #sel-sum .dcp.e{color:rgba(15,23,42,.4);background:rgba(15,23,42,.05);border-color:rgba(15,23,42,.08);font-weight:600}
+#draft #sel-sum button{flex:none;color:rgba(15,23,42,.75)!important;background:rgba(15,23,42,.06)!important;border-radius:9px!important;padding:5px 11px!important;font-size:11.5px;font-weight:700}
 #draft .dr-l{grid-row:2;grid-column:1;display:block;min-width:0;padding:0}
-#draft .dr-l small{display:block;width:0;min-width:100%;overflow:hidden;text-overflow:ellipsis;font-size:clamp(10px,3vw,11px)!important;color:rgba(255,255,255,.6);opacity:1;font-size:11px;font-weight:600;line-height:1.2;white-space:nowrap}
+#draft .dr-l small{display:block;width:0;min-width:100%;overflow:hidden;text-overflow:ellipsis;font-size:clamp(10px,3vw,11px)!important;color:rgba(15,23,42,.6);opacity:1;font-size:11px;font-weight:600;line-height:1.2;white-space:nowrap}
 #draft .dr-l b{display:block;overflow:hidden;text-overflow:ellipsis;color:var(--mint);font-size:clamp(16px,5vw,20px);font-weight:800;letter-spacing:-.4px;line-height:1.15;white-space:nowrap}
 #draft .dr-f{display:contents}
 #draft .dr-f #coupon-formula{display:none}
-#draft .dr-nb{grid-row:2;grid-column:2;width:clamp(36px,11vw,42px);height:44px;padding:0!important;font-size:0!important;background:rgba(255,255,255,.08)!important;border-radius:14px!important;display:flex;align-items:center;justify-content:center;color:#fff!important}
-#draft .dr-nb::before{content:"";width:19px;height:19px;background:rgba(255,255,255,.85);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E") center/contain no-repeat}
+#draft .dr-nb{grid-row:2;grid-column:2;width:clamp(36px,11vw,42px);height:44px;padding:0!important;font-size:0!important;background:rgba(15,23,42,.06)!important;border-radius:14px!important;display:flex;align-items:center;justify-content:center;color:var(--tx,#0f172a)!important}
+#draft .dr-nb::before{content:"";width:19px;height:19px;background:rgba(15,23,42,.8);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E") center/contain no-repeat}
 body.note-open #draft .dr-nb{background:color-mix(in srgb,var(--mint) 22%,transparent)!important}
 body.note-open #draft .dr-nb::before{background:var(--mint)}
-#draft .dr-step{grid-row:2;grid-column:3;background:rgba(255,255,255,.08)!important;color:#fff!important;border-radius:14px!important;padding:2px!important;height:44px;box-sizing:border-box}
-#draft .dr-step button{color:#fff!important;background:transparent!important;width:clamp(26px,8vw,30px);height:40px;font-size:19px}
-#draft .dr-step input{background:transparent!important;border:0!important;box-shadow:none!important;color:#fff!important;width:clamp(26px,8vw,34px);text-align:center;height:40px;font-size:15px}
+#draft .dr-step{grid-row:2;grid-column:3;background:rgba(15,23,42,.06)!important;color:var(--tx,#0f172a)!important;border-radius:14px!important;padding:2px!important;height:44px;box-sizing:border-box}
+#draft .dr-step button{color:var(--tx,#0f172a)!important;background:transparent!important;width:clamp(26px,8vw,30px);height:40px;font-size:19px}
+#draft .dr-step input{background:transparent!important;border:0!important;box-shadow:none!important;color:var(--tx,#0f172a)!important;width:clamp(26px,8vw,34px);text-align:center;height:40px;font-size:15px}
 #draft .dr-go{grid-row:2;grid-column:4;height:44px;padding:0 clamp(8px,3vw,14px)!important;border-radius:14px!important;background:var(--mint)!important;color:var(--mint-on)!important;font-size:clamp(13px,4vw,15px);font-weight:800;letter-spacing:-.1px}
-#draft .dr-go.off{background:rgba(255,255,255,.1)!important;color:rgba(255,255,255,.45)!important;opacity:1}
-#draft .dr-note{grid-row:3;grid-column:1/-1;margin:0;box-shadow:none!important;background:rgba(255,255,255,.08)!important;border:1px solid rgba(255,255,255,.12)!important;color:#fff!important;border-radius:12px!important;padding:10px 12px!important}
-#draft .dr-note::placeholder{color:rgba(255,255,255,.5)!important;opacity:1}
+#draft .dr-go.off{background:rgba(15,23,42,.08)!important;color:rgba(15,23,42,.45)!important;opacity:1}
+#draft .dr-note{grid-row:3;grid-column:1/-1;margin:0;box-shadow:none!important;background:rgba(15,23,42,.06)!important;border:1px solid rgba(15,23,42,.12)!important;color:var(--tx,#0f172a)!important;border-radius:12px!important;padding:10px 12px!important}
+#draft .dr-note::placeholder{color:rgba(15,23,42,.5)!important;opacity:1}
 #draft .dr-note.hidden{display:none!important}
 /* Tahmin Yap'ta alt menü ve sohbet balonu yok: ekran tamamen koşulara kalır; geri dönüş üstteki ok ve telefonun geri tuşuyla */
 body[data-tab="bulten"] nav,body[data-tab="bulten"] #chat-fab{display:none!important}
@@ -1118,7 +1122,7 @@ window.addEventListener('load', () => {
 /* Tahmin Yap'ta menü düğmesi geri okuna döner (Akış'a götürür) */
 (function(){
   const b = document.getElementById('menu-btn'); if(!b) return;
-  const menuHtml = b.innerHTML, ARROW = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
+  const menuHtml = b.innerHTML, ARROW = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span class="bk-t">Geri</span>';
   let mode = '';
   function paint(){
     const m = document.body.dataset.tab === 'bulten' ? 'back' : 'menu';
