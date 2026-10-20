@@ -489,7 +489,7 @@ function renderProfile(){
   const me = viewing === ME;
   const f = !!following[viewing];
   const mine = posts.filter(p => p.author === viewing && !p.hidden);
-  const list = mine.filter(p => ptab === 'w' ? isWon(p) : !isWon(p));   // Tutan kuponlar sadece Tutanlar sekmesinde; Kuponlar sekmesinde kalmaz
+  const list = mine.filter(p => ptab === 'w' ? isWon(p) : ptab === 'l' ? isLost(p) : (!isWon(p) && !isLost(p)));   // Tutan → Tutanlar, kaybeden → Kaybedenler; Kuponlar sekmesinde sadece bekleyen/devam eden kuponlar kalır
   const nf = Object.values(following).filter(Boolean).length;
   const cvStyle = (me && myCover)
     ? `background:var(--my-cover) center/cover no-repeat`
@@ -534,11 +534,12 @@ function renderProfile(){
       <button class="stb" onclick="openFollows('fol')"><b>${fmt(Math.max(0, flFollowersOf(viewing).length - (me ? Object.keys(removedFol).filter(k => removedFol[k]).length : 0)))}</b><small>Takipçi</small></button>
       <button class="stb" onclick="openFollows('ing')"><b>${fmt(flFollowingOf(viewing).length)}</b><small>Takip</small></button>
     </div>
-    <div class="rt two">
+    <div class="rt three">
       <button class="${ptab==='k'?'on':''}" onclick="setPtab('k')">Kuponlar</button>
       <button class="${ptab==='w'?'on':''}" onclick="setPtab('w')">Tutanlar</button>
+      <button class="${ptab==='l'?'on':''}" onclick="setPtab('l')">Kaybedenler</button>
     </div>
-    ${list.length ? list.map(postHtml).join('') : `<div class="empty">${ptab==='k' ? 'Henüz paylaşılan kupon yok.' : 'Henüz tutan kupon bulunmuyor.'}</div>`}
+    ${list.length ? list.map(postHtml).join('') : `<div class="empty">${ptab==='k' ? 'Henüz paylaşılan kupon yok.' : ptab==='l' ? 'Kaybeden kupon bulunmuyor.' : 'Henüz tutan kupon bulunmuyor.'}</div>`}
     </div>
   `;
 }
