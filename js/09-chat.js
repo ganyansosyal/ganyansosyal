@@ -5,16 +5,19 @@ let chat = {unsub: null, open: false, unread: 0, first: true, msgs: [], last: 0}
 // Sitenin sunucu saati (HTTP "Date" başlığı) ile telefon saatinin farkı bulunur; 5 sn'den büyükse mesaj zamanına eklenir.
 // Sıra kuralı: yeni mesajın zamanı, ekrandaki en yeni mesajdan KÜÇÜK olamaz (en az +1 ms). Böylece telefon saati ne olursa olsun
 // bir mesaj, onu görmüş birinin yazdığı mesajın üstüne düşmez; sıra = geliş sırası.
-const chatMaxTs = () => (chat.msgs || []).reduce((a, m) => Math.max(a, m.ts || 0), 0);
+// Mesajın gerçek zamanı: sunucu saati (sts) varsa o, yoksa (eski mesajlar) gönderenin telefon saatinden gelen ts.
+// Sıralama ve gösterilen saat bu değerle yapılır; böylece yanlış telefon saati sırayı bozmaz.
+const chatMs = m => (m && m.sts && typeof m.sts.toMillis === 'function') ? m.sts.toMillis() : ((m && m.ts) || 0);
+const chatSrvTs = () => { try{ return (window.firebase && firebase.firestore && firebase.firestore.FieldValue) ? firebase.firestore.FieldValue.serverTimestamp() : null; }catch(e){ return null; } };
+const chatMaxTs = () => (chat.msgs || []).reduce((a, m) => Math.max(a, chatMs(m)), 0);
 const chatNow = () => Math.max(Date.now() + (chat.off || 0), chatMaxTs());
 async function chatSaatFarki(){
   if(chat.offT && Date.now() - chat.offT < 30 * 60000) return;   // 30 dk'da bir
-  chat.offT = Date.now();
   try{
     const t0 = Date.now();
     const r = await fetch('./?_sf=' + t0, {method: 'HEAD', cache: 'no-store'});
     const t1 = Date.now(), h = r.headers.get('date'), sv = h ? new Date(h).getTime() : 0;
-    if(sv){ const fark = Math.round((sv + 500) - (t0 + t1) / 2); chat.off = Math.abs(fark) > 5000 ? fark : 0; }
+    if(sv){ const fark = Math.round((sv + 500) - (t0 + t1) / 2); chat.off = Math.abs(fark) > 5000 ? fark : 0; chat.offT = Date.now(); }   // sadece başarılıysa 30 dk beklenir
   }catch(e){}
 }
 const CHAT_LIMIT = 50, CHAT_GAP = 2000;
@@ -39,12 +42,12 @@ function chatListen(full){
   chat.first = true;
   chat.unsub = FB.db.collection('chat').orderBy('ts', 'desc').limit(full ? CHAT_LIMIT : 30).onSnapshot(sn => {
     if(full){
-      chat.msgs = sn.docs.map(d => Object.assign({id: d.id}, d.data())).reverse();
+      chat.msgs = sn.docs.map(d => Object.assign({id: d.id}, d.data({serverTimestamps: 'estimate'}))).sort((a, b) => chatMs(a) - chatMs(b) || (a.id < b.id ? -1 : 1));
       renderChat();
     }else{
       let seen = chatSeenGet();
       if(!seen){ seen = chatNow(); chatSeenSet(seen); }   // ilk kurulum: eski mesajlar okunmamış sayılmasın
-      chat.unread = sn.docs.filter(d => { const m = d.data(); return m.uid !== FB.uid && (m.ts || 0) > seen; }).length;
+      chat.unread = sn.docs.filter(d => { const m = d.data({serverTimestamps: 'estimate'}); return m.uid !== FB.uid && chatMs(m) > seen; }).length;
       chat.first = false;
       chatBadge();
     }
@@ -137,14 +140,14 @@ function renderChat(){
   const el = $('ch-list'); if(!el || !chat.open) return;
   const near = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
   const L = chat.msgs;
-  const days = L.map(m => new Date(m.ts || 0).toDateString());
+  const days = L.map(m => new Date(chatMs(m)).toDateString());
   let prevDay = '', lastMine = false, html = '';
   L.forEach((m, i) => {
-    const d = new Date(m.ts || 0), day = days[i], mine = m.uid === chatUid();
+    const d = new Date(chatMs(m)), day = days[i], mine = m.uid === chatUid();
     if(day !== prevDay){ html += `<div class="ch-day"><span>${esc(_chDayF.format(d))}</span></div>`; prevDay = day; }
     const p = L[i - 1], n = L[i + 1], GAP = 5 * 60000;
-    const samePrev = p && p.uid === m.uid && days[i - 1] === day && (m.ts - p.ts) < GAP;
-    const sameNext = n && n.uid === m.uid && days[i + 1] === day && (n.ts - m.ts) < GAP;
+    const samePrev = p && p.uid === m.uid && days[i - 1] === day && (chatMs(m) - chatMs(p)) < GAP;
+    const sameNext = n && n.uid === m.uid && days[i + 1] === day && (chatMs(n) - chatMs(m)) < GAP;
     const key = mine ? ME : FB.keyOf[m.uid], name = key && USERS[key] ? dn(key) : (m.n || 'Kullanıcı');
     const hm = _chTimeF.format(d);
     const delB = (mine || FB.isAdmin) ? `<button class="ch-do" onclick="event.stopPropagation();askConfirm('Mesaj silinsin mi?','Bu mesaj sohbetten kaldırılacak.','Sil',()=>delChat('${esc(m.id)}'))" aria-label="Sil">${ic('trash',14)}</button>` : '';
@@ -179,7 +182,10 @@ function sendChat(){
   chat.last = now; inp.value = '';
   const rp = chat.reply ? {id: chat.reply.id, n: chat.reply.n, t: chat.reply.t} : null; clearChatReply();
   if(!FB_ON){ LOCAL_CHAT.push(Object.assign({id:'l' + now, uid:'local-me', n: USERS[ME].name, t, ts: now}, rp ? {r: rp} : {})); chat.msgs = LOCAL_CHAT.slice(); renderChat(); inp.focus({preventScroll: true}); return; }
-  FB.db.collection('chat').add(Object.assign({uid: FB.uid, n: USERS[ME].name, t, ts: Math.max(now + (chat.off || 0), chatMaxTs() + 1)}, rp ? {r: rp} : {})).catch(e => showToast('Mesaj gönderilemedi: ' + fbErr(e)));
+  const doc = Object.assign({uid: FB.uid, n: USERS[ME].name, t, ts: Math.max(now + (chat.off || 0), chatMaxTs() + 1)}, rp ? {r: rp} : {});
+  const col = FB.db.collection('chat'), sv = chatSrvTs();
+  // sts = sunucu saati: sıra ve saat telefon saatine bağlı kalmaz. Kurallar ek alanı reddederse eski yöntemle (sadece ts) gönderilir.
+  (sv ? col.add(Object.assign({sts: sv}, doc)).catch(() => col.add(doc)) : col.add(doc)).catch(e => showToast('Mesaj gönderilemedi: ' + fbErr(e)));
   inp.focus({preventScroll: true});
 }
 function startChatEdit(id){
