@@ -170,8 +170,13 @@ function toggleHorse(no){
     else {
       const used = same.map(x => x.slot);
       let slot = 0; while(used.includes(slot)) slot++;
-      if(slot >= T.slots){ showToast(`En fazla ${T.slots} at seçebilirsin.`); return; }
+      if(!T.vir && slot >= T.slots){ showToast(`En fazla ${T.slots} at seçebilirsin.`); return; }
       add(slot);
+    }
+    if(T.vir){   // virgüllü: silince sıra boşluğu kalmasın, kalan atlar seçim sırasıyla 1..n yeniden numaralanır
+      const cur = Object.keys(sel).map(q => ({q, h: sel[q]})).filter(x => x.h.c === city && x.h.r === race).sort((a, b) => a.h.slot - b.h.slot);
+      cur.forEach(x => delete sel[x.q]);
+      cur.forEach((x, i) => { x.h.slot = i; sel[kk(race, i, x.h.no)] = x.h; });
     }
   } else {
     const slot = (T.slots || T.tabs) ? curSlot : 0, k = kk(race, slot, no);

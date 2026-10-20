@@ -45,14 +45,18 @@ function bkShare(noHorse){
 
 // ---- TJK'daki gibi "bu koşudan başlar" satırı + oyun kuralları ----
 const BASLAR_AD = {PLASE:{7:"7'Lİ PLASE"}, GANYAN:{3:"3'LÜ GANYAN",4:"4'LÜ GANYAN",5:"5'Lİ GANYAN",6:"6'LI GANYAN",7:"7'Lİ GANYAN"}, CIFTE:{2:'ÇİFTE'}};
+const OYUN_AD = {g1:'GANYAN', ik:'İKİLİ', si:'SIRALI İKİLİ', pi:'PLASE İKİLİ', su:'ÜÇLÜ BAHİS', tb:'TABELA', s5:"SIRALI 5'Lİ", pl:'PLASE'};
 function baslarYazi(c, r){
-  const ki = raceInfo(c, r); if(!ki || !(ki.baslar || []).length) return '';
-  const out = ki.baslar.map(x => {
+  const ki = raceInfo(c, r); if(!ki) return '';
+  const bas = (ki.baslar || []).slice().sort((x, y) => (y.tur === 'CIFTE') - (x.tur === 'CIFTE'));   // TJK/Nesine sırası: önce Çifte
+  const out = bas.map(x => {
     const ad = (BASLAR_AD[x.tur] || {})[x.n]; if(!ad) return '';
     const st = raceList(c).filter(k => (k.baslar || []).some(y => y.tur === x.tur && y.n === x.n)).map(k => +k.no);
     return (st.length > 1 ? (st.indexOf(r) + 1) + '. ' : '') + ad;
   }).filter(Boolean);
-  return out.length ? out.join(', ') + ' bu koşudan başlar' : '';
+  const oy = ki.oyun ? Object.keys(OYUN_AD).filter(k => ki.oyun.includes(k)).map(k => OYUN_AD[k]) : [];
+  if(!out.length && !oy.length) return '';
+  return (out.length ? out.join(', ') + ' bu koşudan başlar' : '') + (oy.length ? (out.length ? ', ' : '') + oy.join(', ') : '');
 }
 function kuralMetni(T){
   const bf = fiyatYazi(birimFiyat(T.name, city)), ek = [];
@@ -64,6 +68,7 @@ function kuralMetni(T){
   else if(T.rule === 'any2') m = 'İlk iki atı sırasız bil. Hangisinin birinci, hangisinin ikinci geldiği önemli değil.';
   else if(T.rule === 'pl2') m = "Plase'ye giren iki atı sırasız bil.";
   else if(T.rule === 'any4') m = 'İlk dört atı bil (tabela). Sırasıyla bilirsen sıralı ikramiye, sırasız bilirsen sırasız ikramiye kazanırsın.';
+  else if(T.rule === 'slots' && T.vir) m = `En az ${T.slots} at seç, dokunma sırası listendeki sıra olur. İlk ${T.slots} at listende, aynı sırayla yer alırsa kazanırsın. Bahis sayısı: seçtiğin atlardan ${T.slots}'li sıralı kombinasyon sayısı (12 at seçersen 792).`;
   else if(T.rule === 'slots') m = `İlk ${T.slots} atı geliş sırasıyla bil.`;
   else m = T.desc || '';
   if(/Virgüllü/.test(T.name)) ek.push('Her sıra için birden fazla at seçebilirsin; kolon sayısı arttıkça tutar artar.');
@@ -79,6 +84,39 @@ function renderKuralBilgi(T, c, r){
     + '<details><summary style="cursor:pointer;font-weight:600">ⓘ ' + esc(tLabel(T, c)) + ' nasıl oynanır?</summary><div style="margin-top:4px;opacity:.85">' + esc(kuralMetni(T)) + '</div></details>';
   if(box._h !== html){ box._h = html; box.innerHTML = html; }
 }
+
+
+// ---- Virgüllü sıralı: seçim sırası ve "Sırala" penceresi ----
+const virOrder = () => selList().filter(h => h.c === city && h.r === race).sort((a, b) => a.slot - b.slot);
+function virSetOrder(nos){
+  const hs = {}; virOrder().forEach(h => { hs[h.no] = h; delete sel[kk(race, h.slot, h.no)]; });
+  nos.forEach((n, i) => { const h = hs[n]; if(!h) return; h.slot = i; sel[kk(race, i, n)] = h; });
+}
+function virMove(i, d){
+  const nos = virOrder().map(h => h.no), j = i + d; if(j < 0 || j >= nos.length) return;
+  [nos[i], nos[j]] = [nos[j], nos[i]]; virSetOrder(nos); renderBulten(); virSiralaCiz();
+}
+function virNumaraSirala(){ virSetOrder(virOrder().map(h => h.no).sort((a, b) => a - b)); renderBulten(); virSiralaCiz(); }
+function virSiralaKapat(){ const o = document.getElementById('vir-sirala'); if(o) o.remove(); }
+function virSiralaCiz(){
+  let o = document.getElementById('vir-sirala');
+  const list = virOrder();
+  if(!list.length){ virSiralaKapat(); return; }
+  if(!o){
+    o = document.createElement('div'); o.id = 'vir-sirala';
+    o.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center';
+    o.onclick = e => { if(e.target === o) virSiralaKapat(); };
+    document.body.appendChild(o);
+  }
+  const btn = 'border:0;border-radius:10px;padding:8px 14px;font-size:18px;background:#e6efe9;color:#111';
+  o.innerHTML = `<div style="background:#fff;color:#111;width:100%;max-width:520px;max-height:80vh;overflow:auto;border-radius:18px 18px 0 0;padding:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b style="font-size:17px">Sıralamayı düzenle</b><button style="${btn};font-size:15px" onclick="virSiralaKapat()">Bitti</button></div>
+    <div style="font-size:13px;opacity:.7;margin-bottom:8px">Yukarıdaki at önce gelir. Tutmak için ilk 5 at bu sırayla listede yer almalı.</div>
+    <button style="${btn};font-size:14px;margin-bottom:8px" onclick="virNumaraSirala()">Numaraya göre diz</button>
+    ${list.map((h, i) => `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #0001"><b style="width:26px;text-align:center">${i + 1}</b><b style="width:30px">${h.no}</b><span style="flex:1">${esc(h.name || '')}</span><button style="${btn}" onclick="virMove(${i},-1)" ${i === 0 ? 'disabled' : ''}>▲</button><button style="${btn}" onclick="virMove(${i},1)" ${i === list.length - 1 ? 'disabled' : ''}>▼</button></div>`).join('')}
+  </div>`;
+}
+function virSirala(){ virSiralaCiz(); }
 
 // ---- BÜLTEN: bahis türü -> seçim ----
 // Çok ayaklı bahisler günün SON N koşusudur (örn. 6'lı = 4-9. koşu). Diğer türlerde tek koşu seçilir.
@@ -210,6 +248,10 @@ function buildCoupon(){
   const nos = (r, sl) => picksIn(r, sl).map(h => h.no).sort((a,b) => a - b);
   if(T.mode === 'legs') return {...base, legs: legRaces().map(r => L(r, nos(r, 0)))};
   const r = selList()[0].r;
+  if(T.vir){   // virgüllü sıralı: dokunma sırası = liste sırası, en az T.slots at
+    const n = selList().filter(h => h.c === city && h.r === r).length;
+    return {...base, vir: T.slots, legs: Array.from({length: n}, (_, i) => ({...L(r, nos(r, i)), slot: i}))};
+  }
   if(T.slots) return {...base, legs: Array.from({length: T.slots}, (_, i) => ({...L(r, nos(r, i)), slot: i}))};
   if(T.tabs){   // sekmeli İkili / Plase İkili / Tabela: kupondaki atlar tüm sekmelerin birleşimi; çiftli bahislerde sekme dağılımı da saklanır
     const sets = Array.from({length: T.tabs}, (_, i) => nos(r, i));
@@ -252,6 +294,7 @@ function checkCoupon(){
                       : 'Eksik ayak: ' + miss.map(l => l.r + '.').join(', ') + ' koşu');
     return {err: true};
   }
+  if(c.vir && c.legs.length < c.vir){ showToast('En az ' + c.vir + ' at seç (şu an ' + c.legs.length + ').'); return {err: true}; }
   if(kolon(c) < 1){
     showToast((slotted || curT().tabs) ? 'Her sırada farklı bir at olmalı.' : 'Seçimini tamamla: en az ' + (ruleOf(c) === 'any4' ? 4 : 2) + ' at seç.');
     return {err: true};
@@ -703,11 +746,11 @@ function _renderBulten(){
   $('sel-sum').classList.toggle('hidden', !n);
   if(document.body) document.body.classList.toggle('has-draft', !!n);
   if(c){
-    const total = T.mode === 'legs' ? T.n : (T.tabs || T.slots || 1);
+    const total = T.mode === 'legs' ? T.n : (T.tabs || T.slots || 1);   // virgüllüde total = en az seçilecek at
     const done = T.tabs ? Array.from({length: T.tabs}, (_, i) => picksIn(c.legs[0].r, i).length ? 1 : 0).reduce((a, b) => a + b, 0) : c.legs.filter(l => l.picks.length).length;
-    const unit = (T.slots || T.tabs) ? 'sıra' : 'ayak';
+    const unit = T.vir ? 'at' : (T.slots || T.tabs) ? 'sıra' : 'ayak';
     const k = kolon(c);
-    const full = done === total && k > 0;
+    const full = (T.vir ? done >= total : done === total) && k > 0;
     const ayniAt = !!T.tabs && !T.per && done === total && k === 0;   // İkili / Plase İkili: iki sekmede de aynı tek at seçili
     const multi = total > 1;
     const kn = full ? k : kolonNow(c);
@@ -721,7 +764,9 @@ function _renderBulten(){
     if(document.body) document.body.classList.toggle('has-draft', true);
     if(document.activeElement !== $('misli-out')) $('misli-out').value = misli;
     $('draft-go').classList.toggle('off', !full || !asgOk || !maxOk);
-    $('sel-sum').innerHTML = `<span><b>${esc(city)}</b> · ${c.ord ? c.ord + '. ' : ''}${esc(c.type)}</span><button onclick="clearSel()">Temizle</button>`;
+    $('sel-sum').innerHTML = T.vir
+      ? `<span><b>Seçimler:</b> ${virOrder().map(h => h.no).join(', ')}</span><span><button onclick="virSirala()">Sırala</button> <button onclick="clearSel()">Temizle</button></span>`
+      : `<span><b>${esc(city)}</b> · ${c.ord ? c.ord + '. ' : ''}${esc(c.type)}</span><button onclick="clearSel()">Temizle</button>`;
   }
 }
 

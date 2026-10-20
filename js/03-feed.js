@@ -45,7 +45,7 @@ const TYPES = [
   {k:'tb',  name:'Tabela Bahis', mode:'race', rule:'any4', exact:4, tabs:4, per:1, sub:'ilk 4', desc:'İlk dört atı sırasız bul', hint:'Her sekmeye bir at seç (1.–4. At). İlk dördü sırasıyla ya da sırasız bulursan tutar.'},
   {k:'tbv', name:'Tabela (Virgüllü)', mode:'race', rule:'any4', sub:'ilk 4', desc:'İlk dört atı sırasız bul, çoklu seçim', hint:'İlk dörde girebilecek atları seç (en az 4).'},
   {k:'s5',  name:'Sıralı Beşli', mode:'race', rule:'slots', slots:5, sub:'sıralı ilk 5', desc:'İlk beş atı sırasıyla bul', hint:'Üstteki sekmeden sırayı seç (1. – 5. At), her sıra için at işaretle.'},
-  {k:'s5v', name:'Sıralı Beşli (Virgüllü)', mode:'race', rule:'slots', slots:5, one:true, sub:'sıralı ilk 5', desc:'İlk beş atı sırasıyla bul', hint:'Atlara sırayla dokun: 1., 2., 3., 4. ve 5. gelecek at.'}
+  {k:'s5v', name:'Sıralı Beşli (Virgüllü)', mode:'race', rule:'slots', slots:5, one:true, vir:true, sub:'sıralı ilk 5', desc:'En az 5 at seç, sıran önemli (virgüllü)', hint:'Atlara sırayla dokun (en az 5, istediğin kadar). Dokunma sırası = sıralaman; tutmak için ilk 5 at listede bu sırayla yer almalı.'}
 ];
 const curT = () => TYPES.find(t => t.k === betK);
 function typeName(n){ const t = TYPES.find(x => x.mode === 'legs' && x.rule === 'win' && x.n === n); return t ? t.name : (n === 1 ? 'Ganyan' : n + ' Ayaklı Kupon'); }
@@ -63,8 +63,11 @@ function setPairs(sets){
   A.forEach(a => B.forEach(b => { if(a !== b) seen[Math.min(a, b) + '-' + Math.max(a, b)] = 1; }));
   return Object.keys(seen);
 }
+// Virgüllü sıralı: n atlık sıralı listeden k'lı sıralı alt diziler = C(n, k)
+function comb(n, k){ if(k < 0 || k > n) return 0; let r = 1; for(let i = 1; i <= k; i++) r = r * (n - k + i) / i; return Math.round(r); }
 function kolon(c){
   const ps = c.legs.map(l => l.picks), rule = ruleOf(c);
+  if(c.vir) return c.legs.length >= c.vir ? comb(c.legs.length, c.vir) : 0;
   if(rule === 'slots'){
     let cnt = 0;
     (function rec(i, used){
@@ -105,6 +108,7 @@ function legRes(c, l){
 function legInfo(c, l){
   const res = legRes(c, l);
   if(!res) return {st:'p'};
+  if(c.vir){ const top = res.slice(0, c.vir), inTop = top.includes(l.picks[0]); return {st: inTop ? 'h' : 'm', cls: n => top.includes(n) ? 'win' : 'dim'}; }
   const fk = c.city ? raceInfo(c.city, l.r) : null;
   const rule = ruleOf(c), p = placeCnt(c, l.fld || (fk ? fk.atlar.length : 6));
   let top, hit;
@@ -118,6 +122,13 @@ function legInfo(c, l){
   return {st: hit ? 'h' : 'm', cls};
 }
 function status(c){
+  if(c.vir){   // virgüllü sıralı: ilk k at listede ve listedeki sırayla olmalı
+    const res = c.legs[0] && legRes(c, c.legs[0]);
+    if(!res) return {k:'wait', t:'Koşular bekleniyor', h:0};
+    const top = res.slice(0, c.vir), idx = top.map(n => c.legs.findIndex(l => l.picks[0] === n));
+    const win = top.length === c.vir && idx.every((x, i) => x > -1 && (i === 0 || x > idx[i - 1]));
+    return win ? {k:'win', t:'Tuttu', h:1} : {k:'lose', t:'Kaybetti', h:0};
+  }
   const st = c.legs.map(l => legInfo(c, l).st);
   const h = st.filter(x => x === 'h').length;
   if(st.includes('m')) return {k:'lose', t:'Kaybetti', h};
@@ -292,17 +303,18 @@ function couponHtml(c, draft){
     return `<div class="cp-lb ${cols <= 2 ? 'wide' : ''}">${l.picks.length ? l.picks.map(n => cchip(n, i)).join('') : '<span class="cp-empty">—</span>'}${single ? mk(i.st) : ''}</div>`;
   }).join('');
   const res0 = c.legs[0] && legRes(c, c.legs[0]);
-  const order = (res0 && (slotted || ruleOf(c) === 'any4')) ? `<div class="cp-order">Geliş sırası: <b>${res0.slice(0, slotted ? c.legs.length : 4).join(' · ')}</b></div>` : '';
+  const order = (res0 && (slotted || ruleOf(c) === 'any4')) ? `<div class="cp-order">Geliş sırası: <b>${res0.slice(0, slotted ? (c.vir || c.legs.length) : 4).join(' · ')}</b></div>` : '';
   const unit = slotted ? 'sıra' : 'ayak';
   const settled = c.legs.some(l => legInfo(c, l).st !== 'p');
   const legend = '';
   const realN = ruleOf(c) === 'win' ? 1 : ruleOf(c) === 'any2' ? 2 : ruleOf(c) === 'any4' ? 4 : (ruleOf(c) === 'pl2' ? 3 : placeN());
   const realRow = (!single && !slotted && c.legs.some(l => legRes(c, l))) ? `<div class="cp-real"><div class="cp-real-h">Gerçek sıralama</div><div class="cp-real-g" style="grid-template-columns:repeat(${cols},1fr)">${c.legs.map(l => { const r = legRes(c, l); const g = (r && ruleOf(c) === 'win') ? ((l.odds && l.odds[r[0]]) || (c.city ? gnyOf(c.city, l.r, r[0]) : '')) : ''; return `<div class="cp-rc">${r ? r.slice(0, realN).join(' · ') : '<span class="cp-empty">—</span>'}${g ? gnyPill(g) : ''}</div>`; }).join('')}</div></div>` : '';
-  const marksRow = (!single && settled) ? `<div class="cp-marks" style="grid-template-columns:repeat(${cols},1fr)">${c.legs.map(l => `<div class="cp-mc">${mk(legInfo(c, l).st)}</div>`).join('')}</div>` : '';
+  const marksRow = (!single && settled && !c.vir) ? `<div class="cp-marks" style="grid-template-columns:repeat(${cols},1fr)">${c.legs.map(l => `<div class="cp-mc">${mk(legInfo(c, l).st)}</div>`).join('')}</div>` : '';
   return `<div class="cp s-${s.k}">
     <div class="cp-head"><b>${esc(c.city)} · ${c.ord ? c.ord + '. ' : ''}${esc(c.type || typeName(cols))}</b><span>${draft ? 'Taslak' : esc(c.ts ? fmtStamp(c.ts, true) : c.date)}</span></div>
     ${cols === 1 && !slotted
       ? singleLegHtml(c)
+      : c.vir ? `<div class="cp-vir" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 12px">${c.legs.map((l, i) => cchip(l.picks[0], legInfo(c, l)) + (i < c.legs.length - 1 ? '<span style="opacity:.4">›</span>' : '')).join('')}</div><div class="cp-order" style="padding:0 12px 6px">Virgüllü: ${c.legs.length} at, soldan sağa sıralı · her ${c.vir}\'li sıralı alt dizi 1 kolon</div>`
       : `<div class="cp-grid${cols >= 5 ? ' dense' : ''}" style="grid-template-columns:repeat(${cols},1fr)">${heads}${bodies}</div>`}
     ${realRow}${marksRow}${order}${legend}
     <div class="cp-money">
