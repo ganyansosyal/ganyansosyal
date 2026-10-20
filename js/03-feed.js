@@ -590,24 +590,24 @@ nav,.top,#bul-sticky,.tvcard,.pstick{box-shadow:none!important}
 #tab-bulten .chip.on,#tab-bulten .chip:active{box-shadow:none!important}
 .tk-t{will-change:auto!important}
 /* Tahmin Yap alt kupon paneli: sade, açık yüzey; Seçimler satırı panelin içinde */
-#draft.dr{left:12px!important;right:12px!important;max-width:476px!important;bottom:calc(68px + env(safe-area-inset-bottom,0px))!important;background:color-mix(in srgb,var(--ac) 10%,var(--sf))!important;color:var(--tx)!important;border:1.5px solid color-mix(in srgb,var(--ac) 42%,transparent)!important;border-radius:20px!important;padding:10px 12px 10px!important;gap:8px 10px!important;box-shadow:none!important;animation:none!important;display:flex;flex-wrap:wrap;align-items:center}
+#draft.dr{left:12px!important;right:12px!important;max-width:476px!important;bottom:calc(68px + env(safe-area-inset-bottom,0px))!important;background:linear-gradient(135deg,var(--ac),color-mix(in srgb,var(--ac) 80%,#064e3b))!important;color:var(--on)!important;border:0!important;border-radius:20px!important;padding:11px 12px 11px!important;gap:8px 10px!important;box-shadow:none!important;animation:none!important;display:flex;flex-wrap:wrap;align-items:center}
 #draft.dr.hidden{display:none!important}
 #draft button{background:transparent;color:inherit;transform:none!important}
-#draft #sel-sum{order:0;flex:1 1 100%;margin:0!important;padding:0 2px 8px!important;min-height:0!important;visibility:visible!important;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid color-mix(in srgb,var(--ac) 22%,transparent);font-size:12.5px;color:var(--mu)}
-#draft #sel-sum b{color:var(--tx)}
-#draft #sel-sum span span{color:var(--ac)!important}
-#draft #sel-sum button{color:var(--red,#e5484d)!important;background:none!important;padding:2px 0!important;font-size:12.5px;font-weight:800}
+#draft #sel-sum{order:0;flex:1 1 100%;margin:0!important;padding:0 2px 8px!important;min-height:0!important;visibility:visible!important;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid color-mix(in srgb,var(--on) 22%,transparent);font-size:12.5px;color:var(--on)}
+#draft #sel-sum b{color:var(--on);opacity:.85;font-weight:700}
+#draft #sel-sum span span{color:var(--on)!important;font-weight:800;letter-spacing:.2px}
+#draft #sel-sum button{color:var(--on)!important;background:color-mix(in srgb,var(--on) 18%,transparent)!important;border-radius:9px!important;padding:4px 10px!important;font-size:12px;font-weight:800}
 #draft .dr-l{order:1;flex:1 1 auto;min-width:0}
-#draft .dr-l small{color:color-mix(in srgb,var(--ac) 55%,var(--mu));opacity:1;font-size:11.5px;font-weight:700}
-#draft .dr-l b{display:block;color:var(--tx);font-size:20px;font-weight:800;letter-spacing:-.4px;line-height:1.15}
-#draft .dr-step{order:2;background:color-mix(in srgb,var(--ac) 16%,var(--sf))!important;color:var(--tx)!important;border-radius:13px!important;padding:2px!important}
-#draft .dr-step button{color:var(--tx)!important;background:transparent!important;width:32px;height:34px}
-#draft .dr-step input{color:var(--tx)!important;width:42px}
-#draft .dr-go{order:3;background:var(--ac)!important;color:var(--on)!important;border-radius:14px!important;padding:11px 20px!important;font-size:14px;font-weight:800}
-#draft .dr-go.off{opacity:.45}
-#draft .dr-f{order:4;flex:1 1 100%;border-top:0!important;padding-top:0!important;margin:0!important;display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--mu);opacity:1!important;font-size:11.5px;font-weight:600}
-#draft .dr-nb{background:color-mix(in srgb,var(--ac) 16%,var(--sf))!important;color:var(--ac)!important;border-radius:10px!important;padding:5px 10px!important;font-size:12px;font-weight:800;white-space:nowrap}
-#draft .dr-note{order:5;flex:1 1 100%;box-shadow:none!important;background:var(--sf)!important;border:1px solid color-mix(in srgb,var(--ac) 30%,transparent)!important;color:var(--tx)!important;border-radius:12px!important;padding:9px 12px!important}
+#draft .dr-l small{color:var(--on);opacity:.85;font-size:11.5px;font-weight:700}
+#draft .dr-l b{display:block;color:var(--on);font-size:21px;font-weight:800;letter-spacing:-.4px;line-height:1.15}
+#draft .dr-step{order:2;background:color-mix(in srgb,var(--on) 18%,transparent)!important;color:var(--on)!important;border-radius:13px!important;padding:2px!important}
+#draft .dr-step button{color:var(--on)!important;background:transparent!important;width:32px;height:34px}
+#draft .dr-step input{color:var(--on)!important;width:42px}
+#draft .dr-go{order:3;background:var(--on)!important;color:var(--ac)!important;border-radius:14px!important;padding:11px 20px!important;font-size:14px;font-weight:800}
+#draft .dr-go.off{opacity:.6}
+#draft .dr-f{order:4;flex:1 1 100%;border-top:0!important;padding-top:0!important;margin:0!important;display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--on);opacity:.92!important;font-size:11.5px;font-weight:600}
+#draft .dr-nb{background:color-mix(in srgb,var(--on) 18%,transparent)!important;color:var(--on)!important;border-radius:10px!important;padding:5px 10px!important;font-size:12px;font-weight:800;white-space:nowrap}
+#draft .dr-note{order:5;flex:1 1 100%;box-shadow:none!important;background:var(--sf)!important;border:0!important;color:var(--tx)!important;border-radius:12px!important;padding:9px 12px!important}
 #draft .dr-note.hidden{display:none!important}
 body[data-tab="bulten"] .app{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))!important}
 body[data-tab="bulten"].note-open .app{padding-bottom:calc(240px + env(safe-area-inset-bottom,0px))!important}
