@@ -545,9 +545,10 @@ function _renderBulten(){
 
   $('city-tabs').innerHTML = CITIES.map(c => `<button class="chip ${c===city?'on':''}" onclick="selectCity('${c}')">${c}</button>`).join('');
   const rt = $('race-tabs');
-  // Seçili bahis türünde oynanmayan koşular kapalı: soluk görünür ve tıklanamaz
-  const kosuKapali = r => (T.mode==='legs' && !lr.includes(r)) || (T.mode==='race' && !oyunMusait(T, city, r));
-  const rtHtml = allRaces(city).map(r => { const kp = kosuKapali(r); return `<button class="chip ${r===race?'on':''} ${anyIn(r)?'has':''} ${raceDone(city, r)?'fin':''} ${kp ? 'dim kapali' : ''}" ${kp ? 'disabled aria-disabled="true"' : `onclick="selectRace(${r})"`}>${r}. Koşu</button>`; }).join('');
+  // Sekmeli düzen: çok ayaklıda "1. Ayak, 2. Ayak…" (altında koşu no), tek koşuluklarda sadece oynanan koşular
+  const legMode = T.mode === 'legs';
+  const tabRaces = legMode ? lr : allRaces(city).filter(r => T.mode !== 'race' || oyunMusait(T, city, r));
+  const rtHtml = tabRaces.map((r, i) => `<button class="chip ${legMode ? 'leg' : ''} ${r===race?'on':''} ${anyIn(r)?'has':''} ${raceDone(city, r)?'fin':''}" onclick="selectRace(${r})">${legMode ? `${i+1}. Ayak<small>${r}. Koşu</small>` : `${r}. Koşu`}</button>`).join('');
   const rtSame = rt._h === rtHtml; setHtml(rt, rtHtml);
   const act = rt.querySelector && rt.querySelector('.on');
   if(act && !rtSame) rt.scrollLeft = act.offsetLeft - (rt.clientWidth - act.clientWidth) / 2;
