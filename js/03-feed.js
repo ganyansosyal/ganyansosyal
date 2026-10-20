@@ -23,7 +23,8 @@ const TYPES = [
   {k:'g7',  name:"7'li Ganyan",  mode:'legs', n:7, rule:'win',   sub:'7 ayak'},
   {k:'g6',  name:"6'lı Ganyan",  mode:'legs', n:6, rule:'win',   sub:'6 ayak', si:0},
   {k:'g6b', name:"6'lı Ganyan",  mode:'legs', n:6, rule:'win',   sub:'6 ayak', si:1},   // 2. altılı: sadece bülten ikinci başlangıcı bildiriyorsa görünür
-  {k:'g5',  name:"5'li Ganyan",  mode:'legs', n:5, rule:'win',   sub:'5 ayak'},
+  {k:'g5',  name:"5'li Ganyan",  mode:'legs', n:5, rule:'win',   sub:'5 ayak', si:0},
+  {k:'g5b', name:"5'li Ganyan",  mode:'legs', n:5, rule:'win',   sub:'5 ayak', si:1},   // 2. 5'li: sadece bülten ikinci başlangıcı bildiriyorsa görünür
   {k:'g4',  name:"4'lü Ganyan",  mode:'legs', n:4, rule:'win',   sub:'4 ayak'},
   {k:'g3',  name:"3'lü Ganyan",  mode:'legs', n:3, rule:'win',   sub:'3 ayak'},
   {k:'g1',  name:'Ganyan',       mode:'race', rule:'win',   sub:'1. gelen',  desc:'Tek koşuda kazananı bul'},

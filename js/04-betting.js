@@ -45,7 +45,7 @@ function bkShare(noHorse){
 // ---- BÜLTEN: bahis türü -> seçim ----
 // Çok ayaklı bahisler günün SON N koşusudur (örn. 6'lı = 4-9. koşu). Diğer türlerde tek koşu seçilir.
 // TJK'nın bildirdiği ayak başlangıçları (varsa). Tür → {tur, n}
-const LEG_MAP = {p7:{tur:'PLASE', n:7}, g7:{tur:'GANYAN', n:7}, g6:{tur:'GANYAN', n:6}, g6b:{tur:'GANYAN', n:6}, g5:{tur:'GANYAN', n:5}, g4:{tur:'GANYAN', n:4}, g3:{tur:'GANYAN', n:3}, c2:{tur:'CIFTE', n:2}};
+const LEG_MAP = {p7:{tur:'PLASE', n:7}, g7:{tur:'GANYAN', n:7}, g6:{tur:'GANYAN', n:6}, g6b:{tur:'GANYAN', n:6}, g5:{tur:'GANYAN', n:5}, g5b:{tur:'GANYAN', n:5}, g4:{tur:'GANYAN', n:4}, g3:{tur:'GANYAN', n:3}, c2:{tur:'CIFTE', n:2}};
 // Görünen ad: bülten iki altılı bildiriyorsa "1. 6'lı Ganyan" / "2. 6'lı Ganyan"
 const tLabel = (t, c = city) => (t.si != null && legStarts(t, c).length > 1) ? (t.si + 1) + '. ' + t.name : t.name;
 const legBilgiVar = c => raceList(c).some(k => k.baslar && k.baslar.length);
