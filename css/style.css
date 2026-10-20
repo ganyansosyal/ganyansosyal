@@ -3237,3 +3237,23 @@ nav button.nav-set .ni:after{animation:none!important}
   box-shadow:0 8px 18px -6px color-mix(in srgb,var(--fc) 65%,transparent),inset 0 1px 0 rgba(255,255,255,.28);
 }
 #filters .chip.on svg{opacity:1;transform:scale(1.12) translateY(-1px)}
+
+/* Akış sekmeleri: 6 sekme TEK SATIRDA, küçük ve kenardan kenara (alt alta / içeri girme yok) */
+#filters.chips{
+  display:flex;flex-wrap:nowrap;gap:2px;
+  margin:10px 0 10px;padding:4px;border-radius:16px;
+  overflow:hidden;
+}
+#filters .chip{
+  flex:1 1 auto;min-width:0;
+  gap:3px;padding:7px 2px 6px;border-radius:12px;
+  font-size:9.5px;letter-spacing:0;
+}
+#filters .chip svg{width:16px;height:16px}
+#filters .chip span{overflow:visible;text-overflow:clip}
+#filters .chip.on{box-shadow:0 4px 10px -4px color-mix(in srgb,var(--fc) 60%,transparent),inset 0 1px 0 rgba(255,255,255,.28)}
+#filters .chip.on svg{transform:none}
+@media (max-width:360px){
+  #filters .chip{font-size:8.5px}
+  #filters .chip svg{width:15px;height:15px}
+}
