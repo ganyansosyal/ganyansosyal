@@ -589,38 +589,29 @@ nav,.top,#bul-sticky,.tvcard,.pstick{box-shadow:none!important}
 #tab-bulten .hr{box-shadow:none!important}
 #tab-bulten .chip.on,#tab-bulten .chip:active{box-shadow:none!important}
 .tk-t{will-change:auto!important}
-/* Tahmin Yap alt kupon paneli: sade, açık yüzey; Seçimler satırı panelin içinde */
-#draft.dr{left:12px!important;right:12px!important;max-width:476px!important;bottom:calc(68px + env(safe-area-inset-bottom,0px))!important;background:linear-gradient(135deg,var(--ac),color-mix(in srgb,var(--ac) 80%,#064e3b))!important;color:var(--on)!important;border:0!important;border-radius:20px!important;padding:11px 12px 11px!important;gap:8px 10px!important;box-shadow:none!important;animation:none!important;display:flex;flex-wrap:wrap;align-items:center}
+/* Tahmin Yap alt kupon paneli: alt menüye yaslı, tam genişlik, 3 satırlık yoğun çubuk (Seçimler / özet / misli + Paylaş) */
+#draft.dr{left:0!important;right:0!important;max-width:500px!important;margin:0 auto!important;bottom:var(--navH,56px)!important;background:color-mix(in srgb,var(--ac) 90%,#064e3b)!important;color:var(--on)!important;border:0!important;border-radius:18px 18px 0 0!important;padding:0 0 12px!important;gap:0!important;box-shadow:none!important;animation:none!important;display:flex;flex-wrap:wrap;align-items:center;overflow:hidden}
 #draft.dr.hidden{display:none!important}
 #draft button{background:transparent;color:inherit;transform:none!important}
-#draft #sel-sum{order:0;flex:1 1 100%;margin:0!important;padding:0 2px 8px!important;min-height:0!important;visibility:visible!important;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid color-mix(in srgb,var(--on) 22%,transparent);font-size:12.5px;color:var(--on)}
-#draft #sel-sum b{color:var(--on);opacity:.85;font-weight:700}
+#draft #sel-sum{order:0;flex:1 1 100%;margin:0!important;padding:7px 12px!important;min-height:0!important;visibility:visible!important;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.16);font-size:12.5px;color:var(--on);border:0}
+#draft #sel-sum b{color:var(--on);opacity:.8;font-weight:700}
 #draft #sel-sum span span{color:var(--on)!important;font-weight:800;letter-spacing:.2px}
-#draft #sel-sum button{color:var(--on)!important;background:color-mix(in srgb,var(--on) 18%,transparent)!important;border-radius:9px!important;padding:4px 10px!important;font-size:12px;font-weight:800}
-#draft .dr-l{order:1;flex:1 1 auto;min-width:0}
-#draft .dr-l small{color:var(--on);opacity:.85;font-size:11.5px;font-weight:700}
-#draft .dr-l b{display:block;color:var(--on);font-size:21px;font-weight:800;letter-spacing:-.4px;line-height:1.15}
-#draft .dr-step{order:2;background:color-mix(in srgb,var(--on) 18%,transparent)!important;color:var(--on)!important;border-radius:13px!important;padding:2px!important}
-#draft .dr-step button{color:var(--on)!important;background:transparent!important;width:32px;height:34px}
-#draft .dr-step input{color:var(--on)!important;width:42px}
-#draft .dr-go{order:3;background:var(--on)!important;color:var(--ac)!important;border-radius:14px!important;padding:11px 20px!important;font-size:14px;font-weight:800}
+#draft #sel-sum button{color:var(--on)!important;background:color-mix(in srgb,var(--on) 18%,transparent)!important;border-radius:8px!important;padding:2px 9px!important;font-size:11.5px;font-weight:800}
+#draft .dr-l{order:1;flex:1 1 100%;min-width:0;display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 12px 6px}
+#draft .dr-l small{color:var(--on);opacity:.88;font-size:12.5px;font-weight:700}
+#draft .dr-l b{color:var(--on);font-size:16px;font-weight:800;letter-spacing:-.2px;line-height:1.1}
+#draft .dr-f{display:contents}
+#draft .dr-f #coupon-formula{display:none}
+#draft .dr-nb{order:2;margin-left:12px;background:color-mix(in srgb,var(--on) 18%,transparent)!important;color:var(--on)!important;border-radius:11px!important;padding:0 11px!important;height:38px;font-size:12px;font-weight:800;white-space:nowrap}
+#draft .dr-step{order:3;margin-left:8px;background:color-mix(in srgb,var(--on) 18%,transparent)!important;color:var(--on)!important;border-radius:11px!important;padding:2px!important}
+#draft .dr-step button{color:var(--on)!important;background:transparent!important;width:30px;height:34px}
+#draft .dr-step input{color:var(--on)!important;width:38px}
+#draft .dr-go{order:4;flex:1 1 0;margin:0 12px 0 8px;background:var(--on)!important;color:var(--ac)!important;border-radius:12px!important;height:38px;padding:0 14px!important;font-size:14px;font-weight:800}
 #draft .dr-go.off{opacity:.6}
-#draft .dr-f{order:4;flex:1 1 100%;border-top:0!important;padding-top:0!important;margin:0!important;display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--on);opacity:.92!important;font-size:11.5px;font-weight:600}
-#draft .dr-nb{background:color-mix(in srgb,var(--on) 18%,transparent)!important;color:var(--on)!important;border-radius:10px!important;padding:5px 10px!important;font-size:12px;font-weight:800;white-space:nowrap}
-#draft .dr-note{order:5;flex:1 1 100%;box-shadow:none!important;background:var(--sf)!important;border:0!important;color:var(--tx)!important;border-radius:12px!important;padding:9px 12px!important}
+#draft .dr-note{order:5;flex:1 1 100%;margin:8px 12px 0;box-shadow:none!important;background:var(--sf)!important;border:0!important;color:var(--tx)!important;border-radius:11px!important;padding:9px 12px!important}
 #draft .dr-note.hidden{display:none!important}
-/* Kupon paneli: varsayılan kapalı (ince şerit); kupon tamamlanınca Paylaş görünür; tutamaçtan ya da şeride dokunarak açılır */
-#draft .dr-tg{position:absolute;top:0;left:50%;margin-left:-32px;width:64px;height:20px;padding:0;background:transparent!important;display:flex;align-items:center;justify-content:center}
-#draft .dr-tg i{display:block;width:34px;height:4px;border-radius:3px;background:var(--on);opacity:.55}
-#draft.dr{padding-top:18px!important}
-#draft.min{padding:18px 12px 10px!important;gap:0 10px!important;cursor:pointer}
-#draft.min #sel-sum,#draft.min .dr-step,#draft.min .dr-f,#draft.min .dr-note{display:none!important}
-#draft.min .dr-go.off{display:none!important}
-#draft.min .dr-l b{font-size:19px}
-#draft.min .dr-l small::after{content:" · detay";font-weight:600;opacity:.8}
-body[data-tab="bulten"].dr-min .app,body[data-tab="bulten"].dr-min.note-open .app{padding-bottom:calc(135px + env(safe-area-inset-bottom,0px))!important}
-body[data-tab="bulten"] .app{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))!important}
-body[data-tab="bulten"].note-open .app{padding-bottom:calc(240px + env(safe-area-inset-bottom,0px))!important}
+body[data-tab="bulten"] .app{padding-bottom:calc(180px + env(safe-area-inset-bottom,0px))!important}
+body[data-tab="bulten"].note-open .app{padding-bottom:calc(230px + env(safe-area-inset-bottom,0px))!important}
 /* Performans: ekran dışındaki kartlar çizilmez, sohbet satırları ayrı katman olmaz */
 #posts-container .card{content-visibility:auto;contain-intrinsic-size:auto 460px}
 .ch-m{will-change:auto!important}
@@ -1085,7 +1076,7 @@ window.addEventListener('load', () => {
     const a = document.activeElement;
     const typing = !!a && d.contains(a) && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA');
     const kb = window.innerHeight - v.height - v.offsetTop;
-    if(typing && kb > 100) d.style.setProperty('bottom', (kb + 8) + 'px', 'important');
+    if(typing && kb > 100) d.style.setProperty('bottom', kb + 'px', 'important');
     else d.style.removeProperty('bottom');
   }
   const sched = () => { if(!raf) raf = requestAnimationFrame(fit); };
@@ -1095,24 +1086,16 @@ window.addEventListener('load', () => {
   document.addEventListener('focusout', () => setTimeout(sched, 80));
 })();
 
-/* Kupon paneli aç/kapa */
+/* Alt menü yüksekliği: kupon paneli tam üstüne yaslansın */
 (function(){
-  const d = document.getElementById('draft'); if(!d) return;
-  d.classList.add('min');
-  const g = document.createElement('button');
-  g.type = 'button'; g.className = 'dr-tg'; g.setAttribute('aria-label', 'Kupon panelini aç / kapat'); g.innerHTML = '<i></i>';
-  d.appendChild(g);
-  function sync(){
-    if(d.classList.contains('hidden') && !d.classList.contains('min')) d.classList.add('min');   // seçim bitince tekrar kapalı başlar
-    document.body.classList.toggle('dr-min', d.classList.contains('min'));
+  let last = '';
+  function set(){
+    const n = document.querySelector('nav'); if(!n) return;
+    const v = n.offsetHeight + 'px'; if(v === last) return; last = v;
+    document.documentElement.style.setProperty('--navH', v);
   }
-  function toggle(){
-    d.classList.toggle('min');
-    if(d.classList.contains('min')){ try{ const a = document.activeElement; if(a && d.contains(a)) a.blur(); }catch(e){} }
-    sync();
-  }
-  g.addEventListener('click', e => { e.stopPropagation(); toggle(); });
-  d.addEventListener('click', e => { if(d.classList.contains('min') && !e.target.closest('button,input')) toggle(); });
-  new MutationObserver(sync).observe(d, {attributes: true, attributeFilter: ['class']});
-  sync();
+  set();
+  window.addEventListener('resize', set);
+  window.addEventListener('load', set);
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(set);
 })();
