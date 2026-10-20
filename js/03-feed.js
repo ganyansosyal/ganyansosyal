@@ -555,12 +555,12 @@ function injectFilterStyle(){
 *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 .nf-flash,.nf-flash::before,.nf-flash::after{animation:revert!important}
 #filters{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:8px!important;overflow:visible!important;padding:0!important;margin:10px 0 14px!important;border:0!important;background:transparent!important;box-shadow:none!important}
-#filters .chip{--ac:#10b981;position:relative;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:clamp(4px,1.6vw,7px)!important;width:100%!important;min-width:0!important;height:clamp(40px,11.5vw,46px)!important;padding:0 clamp(4px,1.8vw,10px)!important;margin:0!important;border:1px solid rgba(127,127,127,.18)!important;border-radius:14px!important;background:rgba(255,255,255,.72)!important;color:inherit!important;font-size:clamp(11px,3.3vw,13px)!important;font-weight:600!important;line-height:1!important;letter-spacing:-.2px;white-space:nowrap!important;box-shadow:0 1px 2px rgba(15,23,42,.04)!important;transform:none!important;-webkit-tap-highlight-color:transparent;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+#filters .chip{--ac:#10b981;position:relative;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:clamp(4px,1.6vw,7px)!important;width:100%!important;min-width:0!important;height:clamp(40px,11.5vw,46px)!important;padding:0 clamp(4px,1.8vw,10px)!important;margin:0!important;border:1px solid rgba(127,127,127,.18)!important;border-radius:14px!important;background:#fff!important;color:inherit!important;font-size:clamp(11px,3.3vw,13px)!important;font-weight:600!important;line-height:1!important;letter-spacing:-.2px;white-space:nowrap!important;box-shadow:0 1px 2px rgba(15,23,42,.04)!important;transform:none!important;-webkit-tap-highlight-color:transparent}
 #filters .chip svg{display:block!important;width:clamp(15px,4.4vw,18px)!important;height:clamp(15px,4.4vw,18px)!important;padding:0!important;flex:none!important;border-radius:0!important;fill:none!important;stroke:var(--ac)!important;stroke-width:1.9!important;stroke-linecap:round!important;stroke-linejoin:round!important;background:none!important;opacity:1}
 #filters .chip span{display:block;flex:0 1 auto;min-width:0;overflow:visible;white-space:nowrap;opacity:.9}
 #filters .chip .fc{position:absolute!important;top:-7px;right:-3px;min-width:20px;height:20px;padding:0 6px;box-sizing:border-box;border-radius:10px;background:var(--ac);color:#fff;border:2px solid var(--bg,#fff);font:700 10.5px/16px inherit;font-style:normal;text-align:center;white-space:nowrap;z-index:2}
 #filters .chip:active{background:color-mix(in srgb,var(--ac) 10%,#fff)!important}
-#filters .chip.on{background:color-mix(in srgb,var(--ac) 11%,#fff)!important;color:color-mix(in srgb,var(--ac) 78%,#000)!important;border-color:color-mix(in srgb,var(--ac) 55%,transparent)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 12%,transparent)!important}
+#filters .chip.on{background:color-mix(in srgb,var(--ac) 11%,#fff)!important;color:color-mix(in srgb,var(--ac) 78%,#000)!important;border-color:var(--ac)!important;box-shadow:none!important}
 #filters .chip.on span{opacity:1;font-weight:700}
 #filters .chip.on .fc{background:var(--ac);color:#fff}
 #filters .chip{overflow:visible!important}
@@ -570,10 +570,10 @@ function injectFilterStyle(){
 #filters .f-follow{--ac:#ec4899}
 #filters .f-winners{--ac:#d97706}
 #filters .f-tracked{--ac:#0ea5e9}
-[data-theme="dark"] #filters .chip,.dark #filters .chip{background:rgba(255,255,255,.05)!important}
+[data-theme="dark"] #filters .chip,.dark #filters .chip{background:#1b2230!important}
 [data-theme="dark"] #filters .chip.on,.dark #filters .chip.on{background:color-mix(in srgb,var(--ac) 18%,transparent)!important;color:#fff!important}
 /* Kartlar: yumuşak, ince çerçeveli, derinlik hissi */
-#posts-container .card{border-radius:22px!important;border:1px solid rgba(127,127,127,.14)!important;box-shadow:0 1px 2px rgba(15,23,42,.04),0 10px 28px -14px rgba(15,23,42,.18)!important;overflow:hidden;margin-bottom:14px!important}
+#posts-container .card{border-radius:22px!important;border:1px solid rgba(127,127,127,.14)!important;box-shadow:0 1px 3px rgba(15,23,42,.08)!important;margin-bottom:14px!important}
 #posts-container .card .ph-n b{font-weight:700;letter-spacing:-.2px}
 #posts-container .card .ph-n small{opacity:.55;font-size:12.5px}
 #posts-container .card .txt{font-size:15.5px;line-height:1.45;letter-spacing:-.15px}
