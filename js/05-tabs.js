@@ -882,7 +882,8 @@ function findNext(){
   }));
   nextR = best;
 }
-function setTopH(){ const t = document.querySelector('.top'); if(t) document.documentElement.style.setProperty('--topH', Math.max(0, t.offsetHeight - 1) + 'px'); }
+let _topH = '';
+function setTopH(){ const t = document.querySelector('.top'); if(!t) return; const v = Math.max(0, t.offsetHeight - 1) + 'px'; if(v === _topH) return; _topH = v; document.documentElement.style.setProperty('--topH', v); }   // değer aynıysa yazma: kaydırırken adres çubuğu açılıp kapanınca yapışkan katmanlar boşuna yeniden hesaplanmasın
 setTopH(); window.addEventListener('resize', setTopH); window.addEventListener('load', setTopH);
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(setTopH);
 function paintLive(){

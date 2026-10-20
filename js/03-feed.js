@@ -582,6 +582,13 @@ function injectFilterStyle(){
 .hdet:active,.hmore:active,.hd-s:active,.hm-s:active,.hm-b:active{background:none!important;filter:none!important;box-shadow:none!important}
 .hd-s:focus,.hm-s:focus,.hd-s:focus-visible,.hm-s:focus-visible{outline:none!important;background:none!important}
 .hm-b::after,.hd-s::after,.hm-p,.hm-o{transition:none!important}
+/* Sade üst katmanlar: kaydırmayı yoracak gölge / geçiş / katman yok */
+nav,.top,#bul-sticky,.tvcard,.pstick{box-shadow:none!important}
+#ri-mini{box-shadow:none!important;transition:none!important;animation:none!important;will-change:auto!important;display:none;opacity:1!important;transform:translate(-50%,0)!important;border-bottom:1px solid var(--ln)}
+#ri-mini.show{display:flex}
+#tab-bulten .hr{box-shadow:none!important}
+#tab-bulten .chip.on,#tab-bulten .chip:active{box-shadow:none!important}
+.tk-t{will-change:auto!important}
 /* Performans: ekran dışındaki kartlar çizilmez, sohbet satırları ayrı katman olmaz */
 #posts-container .card{content-visibility:auto;contain-intrinsic-size:auto 460px}
 .ch-m{will-change:auto!important}
