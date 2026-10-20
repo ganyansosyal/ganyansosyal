@@ -190,7 +190,13 @@ function toggleHorse(no){
       add(slot);
     }
   }
+  // Seçim sonrası alt çubuk/özet açılıp kapanınca sayfa kaymasın: dokunulan kartı ekranda aynı yerde tut
+  const kart = document.querySelector('#horses-list .hr[data-no="' + no + '"]'), t0 = kart ? kart.getBoundingClientRect().top : null;
   renderBulten();
+  if(t0 != null){
+    const k2 = document.querySelector('#horses-list .hr[data-no="' + no + '"]');
+    if(k2){ const d = k2.getBoundingClientRect().top - t0; if(Math.abs(d) > 1) window.scrollBy({top: d, behavior: 'instant'}); }
+  }
 }
 
 function toggleNote(){

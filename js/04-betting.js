@@ -59,11 +59,11 @@ function kuralMetni(T){
   let m;
   if(T.mode === 'legs') m = T.rule === 'place' ? `Ardışık ${T.n} ayakta, her koşuda plase'ye girecek bir at seç. Hepsi tutarsa kazanırsın.` : `Ardışık ${T.n} ayakta, her koşunun kazananını bul. Hepsi tutarsa kazanırsın. Bir ayakta birden fazla at seçebilirsin.`;
   else if(T.rule === 'win') m = 'Seçtiğin at birinci gelirse kazanırsın.';
-  else if(T.rule === 'place') m = "Seçtiğin at plase'ye girerse kazanırsın (7 ata kadar ilk 2, 8 ve üstü ilk 3).";
+  else if(T.rule === 'place') m = "Seçtiğin at plase'ye girerse kazanırsın (en az 7 atlı koşuda birinci veya ikinci gelmesi yeter).";
   else if(T.rule === 'gp') m = "Seçtiğin at hem ganyan hem plase oynar. Birinci gelirse ikisi de, sadece plase'ye girerse plase tutar.";
   else if(T.rule === 'any2') m = 'İlk iki atı sırasız bil. Hangisinin birinci, hangisinin ikinci geldiği önemli değil.';
   else if(T.rule === 'pl2') m = "Plase'ye giren iki atı sırasız bil.";
-  else if(T.rule === 'any4') m = 'İlk dört atı bil (tabela). Sırası önemli değil.';
+  else if(T.rule === 'any4') m = 'İlk dört atı bil (tabela). Sırasıyla bilirsen sıralı ikramiye, sırasız bilirsen sırasız ikramiye kazanırsın.';
   else if(T.rule === 'slots') m = `İlk ${T.slots} atı geliş sırasıyla bil.`;
   else m = T.desc || '';
   if(/Virgüllü/.test(T.name)) ek.push('Her sıra için birden fazla at seçebilirsin; kolon sayısı arttıkça tutar artar.');
@@ -577,7 +577,36 @@ function applyOpen(root){
     const s = b.firstElementChild; if(s) s.setAttribute('aria-expanded', String(!kapali));
   });
 }
-const setHtml = (el, h) => { if(el._h !== h){ el.innerHTML = h; el._h = h; if(el.id === 'horses-list'){ applyOpen(el); galipYukle(el); } } };
+// At listesi: tüm listeyi baştan çizmek yerine sadece değişen kartı günceller (titreme/kayma olmaz, açık paneller ve yüklü galop verisi korunur)
+const _hrBase = x => x.replace(/^<div class="[^"]*"/, '<div').replace(/ onclick="[^"]*"/, '').replace(/<span class="(?:tick|rkb)[^"]*"[^>]*>[\s\S]*?<\/span>/, '');
+function patchHorses(el, h){
+  const t = document.createElement('template'); t.innerHTML = h;
+  const nn = Array.from(t.content.children), old = Array.from(el.children);
+  if(!nn.length || old.length !== nn.length || !nn.every((n, i) => n.dataset && n.dataset.no != null && old[i].dataset && old[i].dataset.no === n.dataset.no)) return false;
+  nn.forEach((n, i) => {
+    const o = old[i], ns = n.outerHTML;
+    if(o._h === ns) return;
+    if(o._b != null && o._b === _hrBase(ns)){   // sadece seçim durumu değişti: sınıf + işaret daire
+      o.className = n.className;
+      const a = n.getAttribute('onclick'); if(a == null) o.removeAttribute('onclick'); else o.setAttribute('onclick', a);
+      const ot = o.querySelector(':scope > .tick, :scope > .rkb'), nt = n.querySelector(':scope > .tick, :scope > .rkb');
+      if(ot && nt) ot.replaceWith(nt);
+      o._h = ns;
+    } else { n._h = ns; n._b = _hrBase(ns); o.replaceWith(n); }
+  });
+  Array.from(el.children).forEach(c => { if(c._b == null){ c._h = c.outerHTML; c._b = _hrBase(c._h); } });
+  return true;
+}
+const setHtml = (el, h) => {
+  if(el._h === h) return;
+  if(el.id === 'horses-list'){
+    const ok = el._h != null && patchHorses(el, h);
+    if(!ok){ el.innerHTML = h; Array.from(el.children).forEach(c => { c._h = c.outerHTML; c._b = _hrBase(c._h); }); }
+    el._h = h; applyOpen(el); galipYukle(el);
+    return;
+  }
+  el.innerHTML = h; el._h = h;
+};
 function renderBulten(){
   const y = window.scrollY;
   _renderBulten();
