@@ -5,9 +5,9 @@ const limitliMi = t => LIMITLI_TURLER.indexOf(t) >= 0;
 const kuponMax = () => { try{ return isAdminKey(ME) ? Infinity : ALTILI_MAX; }catch(e){ return ALTILI_MAX; } };   // admin: sınırsız, kullanıcı: 1500 TL
 const ASGARI = 20;   // TJK: 5 Ocak 2026'dan beri tüm müşterek bahislerde asgari iştirak bedeli 20 TL
 const money = n => n.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.') + ' ₺';
-const placeN = (field = 6) => field >= 8 ? 3 : 2;   // plase: 7 ata kadar ilk 2, 8+ ilk 3
-// 7'li Plase (çok ayaklı): at sayısından bağımsız her ayakta sadece ilk 2 tutar; tek koşuluk Plase'de at sayısı kuralı geçerli
-const placeCnt = (c, field) => (c && c.legs && c.legs.length > 1) ? 2 : placeN(field);
+const placeN = () => 2;   // Plase: yönetmelik ve TJK sonuçları: at sayısından bağımsız ilk 2 (Plase İkili ayrı: ilk 3)
+// Plase, Ganyan & Plase ve 7'li Plase: ilk 2. Plase İkili: ilk 3 iki atı bulmak.
+const placeCnt = (c, field) => (c && ruleOf(c) === 'pl2') ? 3 : placeN();
 function raceTime(r, c = city){
   const k = raceInfo(c, r);
   if(k && k.saat) return k.saat;
@@ -30,7 +30,7 @@ const TYPES = [
   {k:'g3',  name:"3'lü Ganyan",  mode:'legs', n:3, rule:'win',   sub:'3 ayak', si:0},
   {k:'g3b', name:"3'lü Ganyan",  mode:'legs', n:3, rule:'win',   sub:'3 ayak', si:1},   // 2. 3'lü: sadece bülten ikinci başlangıcı bildiriyorsa görünür
   {k:'g1',  name:'Ganyan',       mode:'race', rule:'win',   sub:'1. gelen',  desc:'Tek koşuda kazananı bul'},
-  {k:'pl',  name:'Plase',        mode:'race', rule:'place', sub:'plase',     desc:"Seçtiğin at plase'ye girer mi?", hint:'Bir veya daha fazla at seç. Plase: 7 ata kadar ilk 2, 8 ve üstü ilk 3.'},
+  {k:'pl',  name:'Plase',        mode:'race', rule:'place', sub:'plase',     desc:"Seçtiğin at plase'ye girer mi?", hint:'Bir veya daha fazla at seç. Plase: birinci veya ikinci gelen at tutar (en az 7 atlı koşu).'},
   {k:'gp',  name:'Ganyan & Plase', mode:'race', rule:'gp', sub:'1. + plase', desc:'Hem ganyan hem plase oyna', hint:'Seçtiğin her at hem ganyan hem plase oynar.'},
   {k:'si',  name:'Sıralı İkili', mode:'race', rule:'slots', slots:2, one:true, sub:'sıralı ilk 2', desc:'İlk iki atı sırasıyla bul', hint:'Atlara sırayla dokun: önce 1., sonra 2. gelecek at.'},
   {k:'siv', name:'Sıralı İkili (Virgüllü)', mode:'race', rule:'slots', slots:2, sub:'sıralı ilk 2', desc:'İlk iki atı sırasıyla bul, çoklu seçim', hint:'Üstteki sekmeden sırayı seç (1. At / 2. At), her sıra için at işaretle.'},
@@ -296,7 +296,7 @@ function couponHtml(c, draft){
   const unit = slotted ? 'sıra' : 'ayak';
   const settled = c.legs.some(l => legInfo(c, l).st !== 'p');
   const legend = '';
-  const realN = ruleOf(c) === 'win' ? 1 : ruleOf(c) === 'any2' ? 2 : ruleOf(c) === 'any4' ? 4 : placeN();
+  const realN = ruleOf(c) === 'win' ? 1 : ruleOf(c) === 'any2' ? 2 : ruleOf(c) === 'any4' ? 4 : (ruleOf(c) === 'pl2' ? 3 : placeN());
   const realRow = (!single && !slotted && c.legs.some(l => legRes(c, l))) ? `<div class="cp-real"><div class="cp-real-h">Gerçek sıralama</div><div class="cp-real-g" style="grid-template-columns:repeat(${cols},1fr)">${c.legs.map(l => { const r = legRes(c, l); const g = (r && ruleOf(c) === 'win') ? ((l.odds && l.odds[r[0]]) || (c.city ? gnyOf(c.city, l.r, r[0]) : '')) : ''; return `<div class="cp-rc">${r ? r.slice(0, realN).join(' · ') : '<span class="cp-empty">—</span>'}${g ? gnyPill(g) : ''}</div>`; }).join('')}</div></div>` : '';
   const marksRow = (!single && settled) ? `<div class="cp-marks" style="grid-template-columns:repeat(${cols},1fr)">${c.legs.map(l => `<div class="cp-mc">${mk(legInfo(c, l).st)}</div>`).join('')}</div>` : '';
   return `<div class="cp s-${s.k}">
