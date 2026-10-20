@@ -927,3 +927,18 @@ function createNewPost(){
   showToast('Kupon akışta paylaşıldı!');
 }
 
+
+// Alt bardaki "Akış" butonuna basınca (Kaybedenler/Paylaştıklarım vb. açıkken) filtre sıfırlanır, tam akış açılır
+window.addEventListener('load', () => {
+  const st = window.switchTab;
+  if(typeof st !== 'function' || st.__feedReset) return;
+  const w = function(t){
+    const reset = (t === 'feed' && typeof filter !== 'undefined' && filter !== 'all');
+    if(reset) filter = 'all';
+    const r = st.apply(this, arguments);
+    if(reset){ renderFeedNow(); window.scrollTo(0, 0); }
+    return r;
+  };
+  w.__feedReset = true;
+  window.switchTab = w;
+});
