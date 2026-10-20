@@ -563,8 +563,16 @@ function renderFeedNow(){
     ['winners','Tutanlar'],
     ['tracked','Kupon Takip']
   ];
+  const FI = {
+    all: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+    mine: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+    lost: '<circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/>',
+    follow: '<path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/>',
+    winners: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/>',
+    tracked: '<path d="M6 3h12v18l-6-4-6 4V3z"/>'
+  };
   if(!F.some(x => x[0] === filter)) filter = 'all';   // kaldırılan filtre seçili kalmışsa Tümü'ne dön
-  $('filters').innerHTML = F.map(([k,l]) => `<button class="chip ${filter===k?'on':''}" onclick="filterFeed('${k}')">${l}</button>`).join('');
+  $('filters').innerHTML = F.map(([k,l]) => `<button class="chip f-${k} ${filter===k?'on':''}" onclick="filterFeed('${k}')"><svg viewBox="0 0 24 24" aria-hidden="true">${FI[k]}</svg><span>${l}</span></button>`).join('');
   $('draft-chips').innerHTML = selList().length ? '<div class="cmp-hint">Kuponun notunla birlikte paylaşılacak</div>' + couponHtml(buildCoupon(), true) : '';
   
   const fiso = feedIso();
