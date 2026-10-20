@@ -416,6 +416,7 @@ function openProfile(n, force){
   viewing = n;
   ptab = 'k';
   switchTab('profile');
+  { const pb = $('profile-body'); if(pb) pb.scrollTop = 0; }   // başka profile geçince en üstten başla
 }
 
 // ---- Kullanıcı arama (USERS, Firebase 'users' koleksiyonundan canlı dolar) ----
@@ -484,7 +485,7 @@ function renderProfile(){
     : `background:linear-gradient(135deg,${colorOf(viewing)},color-mix(in srgb,${colorOf(viewing)} 35%,#0A0F1E))`;
   
   $('profile-body').innerHTML = `
-    <div class="pstick" style="position:static">
+    <div class="pstick">
       <div class="cv bcv">
         
         <svg class="bcv-bg" viewBox="0 0 400 112" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
