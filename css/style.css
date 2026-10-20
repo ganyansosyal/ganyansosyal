@@ -3193,3 +3193,7 @@ nav button.nav-set .ni:after{animation:none!important}
 #start-tabs .chip:not(.on){background:var(--sf);border:1.5px solid color-mix(in srgb,var(--mu) 45%,var(--ln));color:var(--tx);box-shadow:0 1px 3px rgba(0,0,0,.08)}
 #start-tabs .chip.fin::after{display:none}
 #start-tabs .chip:disabled{opacity:.45}
+
+/* Profil: GanyanSosyal bannerından itibaren her şey birlikte kayar (üstte sadece uygulama başlığı sabit) */
+#profile-body{overflow-y:auto;overscroll-behavior:none;-webkit-overflow-scrolling:touch;margin:0 -12px;padding:0 12px 16px}
+#profile-body .plist{flex:none;min-height:auto;overflow:visible;padding-bottom:0}
