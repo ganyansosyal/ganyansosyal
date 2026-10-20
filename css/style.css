@@ -3257,3 +3257,44 @@ nav button.nav-set .ni:after{animation:none!important}
   #filters .chip{font-size:8.5px}
   #filters .chip svg{width:15px;height:15px}
 }
+
+/* Arka plan/ambient animasyonları kapalı: sabit ve hafif (ticker kayan yazısı ve yükleme göstergeleri hariç) */
+body::before{display:none}
+.live .dot::before,.tk-b i,.ch-live i,.lv-live.behind i,.card.nf-flash{animation:none!important}
+#filters .chip,#filters .chip svg{transition:none!important}
+
+/* Akış sekmeleri v3: her sekmenin kendi rengi, ikon balonu, seçili olan dolu renkli ve gölgeli; Akış küçük kalmaz */
+#filters.chips{
+  margin:12px 0 12px;padding:5px;gap:3px;border-radius:22px;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--sf) 100%,#fff),color-mix(in srgb,var(--sf) 94%,var(--ac)));
+  border:1px solid color-mix(in srgb,var(--ac) 14%,var(--ln));
+  box-shadow:0 14px 30px -14px color-mix(in srgb,var(--ac) 40%,transparent),0 2px 6px rgba(0,0,0,.05),inset 0 1px 0 rgba(255,255,255,.7);
+}
+#filters .chip{
+  --fc:#10b981;--fc2:#047857;
+  flex:1 1 auto;min-width:0;gap:4px;padding:7px 3px 6px;border-radius:16px;
+  font-size:9px;font-weight:700;letter-spacing:-.1px;color:var(--mu);
+}
+#filters .chip.f-all{min-width:50px;--fc:#10b981;--fc2:#047857}
+#filters .chip.f-mine{--fc:#3b82f6;--fc2:#1d4ed8}
+#filters .chip.f-lost{--fc:#ef4444;--fc2:#b91c1c}
+#filters .chip.f-follow{--fc:#ec4899;--fc2:#be185d}
+#filters .chip.f-winners{--fc:#f59e0b;--fc2:#d97706}
+#filters .chip.f-tracked{--fc:#8b5cf6;--fc2:#6d28d9}
+#filters .chip svg{
+  box-sizing:border-box;width:28px;height:28px;padding:6px;border-radius:50%;
+  color:var(--fc);opacity:1;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--fc) 20%,transparent),color-mix(in srgb,var(--fc) 8%,transparent));
+}
+#filters .chip:not(.on).f-lost svg,#filters .chip:not(.on).f-winners svg{opacity:1}
+#filters .chip.on{
+  color:#fff;
+  background:linear-gradient(145deg,var(--fc),var(--fc2));
+  box-shadow:0 8px 16px -6px color-mix(in srgb,var(--fc) 70%,transparent),inset 0 1px 0 rgba(255,255,255,.35);
+}
+#filters .chip.on svg{color:#fff;background:rgba(255,255,255,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+@media (max-width:360px){
+  #filters .chip{font-size:8.5px}
+  #filters .chip svg{width:25px;height:25px;padding:5px}
+  #filters .chip.f-all{min-width:44px}
+}
