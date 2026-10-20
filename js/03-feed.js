@@ -44,8 +44,8 @@ const TYPES = [
   {k:'suv', name:'Sıralı Üçlü (Virgüllü)', mode:'race', rule:'slots', slots:3, sub:'sıralı ilk 3', desc:'İlk üç atı sırasıyla bul, çoklu seçim', hint:'Üstteki sekmeden sırayı seç (1. / 2. / 3. At), her sıra için at işaretle.'},
   {k:'tb',  name:'Tabela Bahis', mode:'race', rule:'any4', exact:4, tabs:4, per:1, sub:'ilk 4', desc:'İlk dört atı sırasız bul', hint:'Her sekmeye bir at seç (1.–4. At). İlk dördü sırasıyla ya da sırasız bulursan tutar.'},
   {k:'tbv', name:'Tabela (Virgüllü)', mode:'race', rule:'any4', sub:'ilk 4', desc:'İlk dört atı sırasız bul, çoklu seçim', hint:'İlk dörde girebilecek atları seç (en az 4).'},
-  {k:'s5',  name:'Sıralı Beşli', mode:'race', rule:'slots', slots:5, one:true, sub:'sıralı ilk 5', desc:'İlk beş atı sırasıyla bul', hint:'Atlara sırayla dokun: 1., 2., 3., 4. ve 5. gelecek at.'},
-  {k:'s5v', name:'Sıralı Beşli (Virgüllü)', mode:'race', rule:'slots', slots:5, sub:'sıralı ilk 5', desc:'İlk beş atı sırasıyla bul, çoklu seçim', hint:'Üstteki sekmeden sırayı seç (1. – 5. At), her sıra için at işaretle.'}
+  {k:'s5',  name:'Sıralı Beşli', mode:'race', rule:'slots', slots:5, sub:'sıralı ilk 5', desc:'İlk beş atı sırasıyla bul', hint:'Üstteki sekmeden sırayı seç (1. – 5. At), her sıra için at işaretle.'},
+  {k:'s5v', name:'Sıralı Beşli (Virgüllü)', mode:'race', rule:'slots', slots:5, one:true, sub:'sıralı ilk 5', desc:'İlk beş atı sırasıyla bul', hint:'Atlara sırayla dokun: 1., 2., 3., 4. ve 5. gelecek at.'}
 ];
 const curT = () => TYPES.find(t => t.k === betK);
 function typeName(n){ const t = TYPES.find(x => x.mode === 'legs' && x.rule === 'win' && x.n === n); return t ? t.name : (n === 1 ? 'Ganyan' : n + ' Ayaklı Kupon'); }
