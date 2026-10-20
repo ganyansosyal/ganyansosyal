@@ -47,7 +47,13 @@ function bkShare(noHorse){
 // TJK'nın bildirdiği ayak başlangıçları (varsa). Tür → {tur, n}
 const LEG_MAP = {p7:{tur:'PLASE', n:7}, g7:{tur:'GANYAN', n:7}, g6:{tur:'GANYAN', n:6}, g6b:{tur:'GANYAN', n:6}, g5:{tur:'GANYAN', n:5}, g5b:{tur:'GANYAN', n:5}, g4:{tur:'GANYAN', n:4}, g3:{tur:'GANYAN', n:3}, c2:{tur:'CIFTE', n:2}};
 // Görünen ad: bülten iki altılı bildiriyorsa "1. 6'lı Ganyan" / "2. 6'lı Ganyan"
-const tLabel = (t, c = city) => (t.si != null && legStarts(t, c).length > 1) ? (t.si + 1) + '. ' + t.name : t.name;
+// Aynı bahisten TJK'da birden fazla başlangıç varsa (1. / 2. 3'lü Ganyan gibi) seçili grubun sırası başa yazılır
+const tLabel = (t, c = city) => {
+  if(t.mode === 'legs'){ const st = legStarts(t, c); if(st.length > 1){ const i = st.indexOf(legStart(t, c)); if(i >= 0) return (i + 1) + '. ' + t.name; } }
+  return (t.si != null && legStarts(t, c).length > 1) ? (t.si + 1) + '. ' + t.name : t.name;
+};
+// Kullanıcının seçtiği ayak grubu: 'tür|şehir' -> başlangıç koşusu
+let legSel = {};
 const legBilgiVar = c => raceList(c).some(k => k.baslar && k.baslar.length);
 // Bu bahsin TJK'daki başlangıç koşuları (1. 6'lı, 2. 6'lı gibi birden fazla olabilir)
 function legStarts(t, c){
@@ -56,6 +62,10 @@ function legStarts(t, c){
 }
 function legStart(t, c = city){
   const N = raceCount(c);
+  if(legBilgiVar(c)){   // kullanıcı bir ayak grubu seçtiyse (ve henüz başlamadıysa) o geçerli
+    const st0 = legStarts(t, c), pk = legSel[t.k + '|' + c];
+    if(pk != null && st0.includes(pk) && (BUL.note || gecmisMu() || admTest() || !raceDone(c, pk))) return pk;
+  }
   if(t.si != null){   // 1. / 2. altılı: bültendeki sıraya göre sabit başlangıç
     if(legBilgiVar(c)){ const st = legStarts(t, c); return st[t.si] != null ? st[t.si] : null; }
     return t.si ? null : (N >= t.n ? N - t.n + 1 : null);
@@ -152,11 +162,22 @@ function buildCoupon(){
   if(!selList().length) return null;
   const T = curT();
   const base = {city, type: T.name, rule: T.rule, date: 'Bugün', misli};
-  if(T.si != null && legStarts(T, city).length > 1) base.ord = T.si + 1;   // 1. / 2. altılı (tür adı aynı kalır: puan, limit, kontenjan bozulmaz)
+  if(T.mode === 'legs'){   // 1. / 2. altılı, 1. / 2. 3'lü… (tür adı aynı kalır: puan, limit, kontenjan bozulmaz); sıra TJK'nın verdiği ord, yoksa başlangıç sırası
+    const st = legStarts(T, city), ilk = legStart(T, city);
+    if(st.length > 1 && ilk != null){
+      const mp = LEG_MAP[T.k], ki = raceInfo(city, ilk), b = mp && ki && (ki.baslar || []).find(x => x.tur === mp.tur && x.n === mp.n);
+      base.ord = (b && b.ord) ? b.ord : st.indexOf(ilk) + 1;
+    }
+  }
   const nos = (r, sl) => picksIn(r, sl).map(h => h.no).sort((a,b) => a - b);
   if(T.mode === 'legs') return {...base, legs: legRaces().map(r => L(r, nos(r, 0)))};
   const r = selList()[0].r;
   if(T.slots) return {...base, legs: Array.from({length: T.slots}, (_, i) => ({...L(r, nos(r, i)), slot: i}))};
+  if(T.tabs){   // sekmeli İkili / Plase İkili / Tabela: kupondaki atlar tüm sekmelerin birleşimi; çiftli bahislerde sekme dağılımı da saklanır
+    const sets = Array.from({length: T.tabs}, (_, i) => nos(r, i));
+    const all = [...new Set(sets.flat())].sort((a, b) => a - b);
+    return {...base, legs: [{...L(r, all), ...(T.per ? {} : {sets: sets.map(p => ({p}))})}]};
+  }
   return {...base, legs: [L(r, nos(r, 0))]};
 }
 // Tahmin limiti: aynı bahis türünden, tek koşuluk bahislerde koşu başına, çok ayaklı bahislerde şehir başına günde en fazla 2 kupon
@@ -186,6 +207,7 @@ function checkCoupon(){
   { const T0 = curT(); if(T0.mode === 'race' && !oyunMusait(T0, city, c.legs[0].r)){ showToast(tLabel(T0) + ' ' + c.legs[0].r + '. koşuda oynanmıyor.'); return {err: true}; } }
   { const lm = limitDolu(c); if(lm){ showToast(lm); return {err: true}; } }
   const slotted = c.legs.some(l => l.slot != null);
+  { const Tt = curT(); if(Tt.tabs){ const emp = Array.from({length: Tt.tabs}, (_, i) => i).filter(i => !picksIn(c.legs[0].r, i).length); if(emp.length){ showToast('Eksik sıra: ' + emp.map(i => (i + 1) + '. At').join(', ')); return {err: true}; } } }
   const miss = c.legs.filter(l => !l.picks.length);
   if(miss.length){
     showToast(slotted ? 'Eksik sıra: ' + miss.map(l => (l.slot + 1) + '. At').join(', ')
@@ -193,7 +215,7 @@ function checkCoupon(){
     return {err: true};
   }
   if(kolon(c) < 1){
-    showToast(slotted ? 'Her sırada farklı bir at olmalı.' : 'Seçimini tamamla: en az ' + (ruleOf(c) === 'any4' ? 4 : 2) + ' at seç.');
+    showToast((slotted || curT().tabs) ? 'Her sırada farklı bir at olmalı.' : 'Seçimini tamamla: en az ' + (ruleOf(c) === 'any4' ? 4 : 2) + ' at seç.');
     return {err: true};
   }
   { const tut = kolon(c) * birimFiyat(c.type, c.city) * c.misli;
@@ -202,6 +224,12 @@ function checkCoupon(){
   return {c};
 }
 
+function selectStart(s){
+  const T = curT(); if(!T || T.mode !== 'legs' || legStart(T, city) === s) return;
+  if(selList().length){ sel = {}; showToast('Ayak grubu değişti, seçimler temizlendi.'); }
+  legSel[T.k + '|' + city] = s; race = s; curSlot = 0;
+  renderBulten(); kosuBasinaGit(); refreshOranlar(true, true); kosuSonucCek(city, s);
+}
 function renderBulStatus(){
   const e = $('bul-status'); if(!e) return;
   if(BUL.status === 'loading') e.innerHTML = '<span>TJK bülteni yükleniyor…</span>';
@@ -532,7 +560,8 @@ function _renderBulten(){
   autoFixType();
   const T = curT(), lr = legRaces();
   if(!allRaces(city).includes(race)) race = nextRaceNo(city);
-  const slotMode = T.slots && !T.one;       // virgüllü: sıra sekmeleri
+  const tabN = T.tabs || T.slots || 0;
+  const slotMode = !!((T.slots && !T.one) || T.tabs);       // virgüllü ve sekmeli İkili/Plase İkili/Tabela: sıra sekmeleri
   $('tsel-name').textContent = tLabel(T);
   $('tsel-sub').textContent = T.desc || (T.rule === 'place'
     ? `${lr[0]}.–${lr[lr.length - 1]}. koşu · her ayakta plase'ye girecek atı bul`
@@ -545,6 +574,14 @@ function _renderBulten(){
 
   $('city-tabs').innerHTML = CITIES.map(c => `<button class="chip ${c===city?'on':''}" onclick="selectCity('${c}')">${c}</button>`).join('');
   const rt = $('race-tabs');
+  // Ayak grubu sekmeleri: aynı bahisten TJK'da birden fazla başlangıç varsa (3-4-5 | 7-8-9) kullanıcı seçer
+  let sr = $('start-tabs');
+  if(!sr && rt.parentNode){ sr = document.createElement('div'); sr.id = 'start-tabs'; sr.className = 'chips hidden'; rt.parentNode.insertBefore(sr, rt); }
+  if(sr){
+    const sts = T.mode === 'legs' ? legStarts(T, city) : [], cur0 = legStart(T, city), showSt = sts.length > 1;
+    sr.classList.toggle('hidden', !showSt);
+    setHtml(sr, showSt ? sts.map(s => { const bitti = !(BUL.note || gecmisMu() || admTest()) && raceDone(city, s); return `<button class="chip ${s===cur0?'on':''} ${bitti?'fin dim':''}" ${bitti ? 'disabled aria-disabled="true"' : `onclick="selectStart(${s})"`}>${Array.from({length: T.n}, (_, i) => s + i).join('-')}</button>`; }).join('') : '');
+  }
   // Sekmeli düzen: çok ayaklıda "1. Ayak, 2. Ayak…" (altında koşu no), tek koşuluklarda sadece oynanan koşular
   const legMode = T.mode === 'legs';
   const tabRaces = legMode ? lr : allRaces(city).filter(r => T.mode !== 'race' || oyunMusait(T, city, r));
@@ -556,7 +593,7 @@ function _renderBulten(){
   const st = $('slot-tabs');
   st.classList.toggle('hidden', !slotMode);
   st.innerHTML = slotMode
-    ? Array.from({length: T.slots}, (_, i) => `<button class="chip ${i===curSlot?'on':''} ${picksIn(race,i).length?'has':''}" onclick="selectSlot(${i})">${i+1}. At</button>`).join('')
+    ? Array.from({length: tabN}, (_, i) => `<button class="chip ${i===curSlot?'on':''} ${picksIn(race,i).length?'has':''}" onclick="selectSlot(${i})">${i+1}. At</button>`).join('')
     : '';
 
   const ri = raceInfo(city, race);
@@ -587,7 +624,7 @@ function _renderBulten(){
   const idx = lr.indexOf(race);
   let nx = '';
   if(T.mode === 'legs' && idx < lr.length - 1) nx = `<button class="btn2 next" onclick="selectRace(${lr[idx+1]})">Sonraki ayak: ${lr[idx+1]}. Koşu ›</button>`;
-  if(slotMode && curSlot < T.slots - 1) nx = `<button class="btn2 next" onclick="selectSlot(${curSlot+1})">Sonraki sıra: ${curSlot+2}. At ›</button>`;
+  if(slotMode && curSlot < tabN - 1) nx = `<button class="btn2 next" onclick="selectSlot(${curSlot+1})">Sonraki sıra: ${curSlot+2}. At ›</button>`;
   $('next-wrap').innerHTML = nx;
 
   // Alt bar
@@ -598,9 +635,9 @@ function _renderBulten(){
   $('sel-sum').classList.toggle('hidden', !n);
   if(document.body) document.body.classList.toggle('has-draft', !!n);
   if(c){
-    const total = T.mode === 'legs' ? T.n : (T.slots || 1);
-    const done = c.legs.filter(l => l.picks.length).length;
-    const unit = T.slots ? 'sıra' : 'ayak';
+    const total = T.mode === 'legs' ? T.n : (T.tabs || T.slots || 1);
+    const done = T.tabs ? Array.from({length: T.tabs}, (_, i) => picksIn(c.legs[0].r, i).length ? 1 : 0).reduce((a, b) => a + b, 0) : c.legs.filter(l => l.picks.length).length;
+    const unit = (T.slots || T.tabs) ? 'sıra' : 'ayak';
     const k = kolon(c);
     const full = done === total && k > 0;
     const multi = total > 1;

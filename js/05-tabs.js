@@ -174,8 +174,17 @@ function toggleHorse(no){
       add(slot);
     }
   } else {
-    const slot = T.slots ? curSlot : 0, k = kk(race, slot, no);
+    const slot = (T.slots || T.tabs) ? curSlot : 0, k = kk(race, slot, no);
     if(sel[k]) delete sel[k];
+    else if(T.per){   // Tabela: her sekmede tek at; at başka sekmedeyse buraya taşınır, sonra boş sekmeye geçilir
+      const ex = same.find(x => x.slot === slot), other = same.find(x => x.no === no && x.slot !== slot);
+      if(ex) delete sel[kk(race, slot, ex.no)];
+      if(other) delete sel[kk(race, other.slot, no)];
+      add(slot);
+      const used = Object.keys(sel).map(q => sel[q]).filter(x => x.c === city && x.r === race).map(x => x.slot);
+      const nxt = Array.from({length: T.tabs}, (_, i) => i).find(i => !used.includes(i));
+      if(nxt != null) curSlot = nxt;
+    }
     else {
       if(T.exact && same.length >= T.exact){ showToast(`Tek kolon: tam ${T.exact} at seçilir.`); return; }
       add(slot);
@@ -748,7 +757,7 @@ function applyBulten(v, t){
   CITIES = Object.keys(v.data);
   if(!CITIES.includes(city)){ city = CITIES[0]; sel = {}; misli = 1; race = nextRaceNo(city); curSlot = 0; }
   if(!allRaces(city).includes(race)) race = nextRaceNo(city);
-  if(BUL.resetRace){ BUL.resetRace = false; race = nextRaceNo(city); curSlot = 0; goFirstLeg(); }   // tarih değişti: ilk koşudan başla
+  if(BUL.resetRace){ BUL.resetRace = false; legSel = {}; race = nextRaceNo(city); curSlot = 0; goFirstLeg(); }   // tarih değişti: ilk koşudan başla
   nextR = null;
   if(visible() === 'bulten') renderBulten(); else if(visible() === 'sonuc') renderSonuc();
   paintLive();

@@ -32,14 +32,14 @@ const TYPES = [
   {k:'gp',  name:'Ganyan & Plase', mode:'race', rule:'gp', sub:'1. + plase', desc:'Hem ganyan hem plase oyna', hint:'Seçtiğin her at hem ganyan hem plase oynar.'},
   {k:'si',  name:'Sıralı İkili', mode:'race', rule:'slots', slots:2, one:true, sub:'sıralı ilk 2', desc:'İlk iki atı sırasıyla bul', hint:'Atlara sırayla dokun: önce 1., sonra 2. gelecek at.'},
   {k:'siv', name:'Sıralı İkili (Virgüllü)', mode:'race', rule:'slots', slots:2, sub:'sıralı ilk 2', desc:'İlk iki atı sırasıyla bul, çoklu seçim', hint:'Üstteki sekmeden sırayı seç (1. At / 2. At), her sıra için at işaretle.'},
-  {k:'ik',  name:'İkili Bahis',  mode:'race', rule:'any2', sub:'ilk 2', desc:'İlk iki atı sırasız bul', hint:'İlk ikiye girebilecek atları seç (en az 2).'},
+  {k:'ik',  name:'İkili Bahis',  mode:'race', rule:'any2', tabs:2, sub:'ilk 2', desc:'İlk iki atı sırasız bul', hint:'1. At ve 2. At sekmelerinden birer veya daha fazla at seç. Her çift, farklı sekmelerden bir attır.'},
   {k:'ik1', name:'İkili Bahis (Tek kolon)', mode:'race', rule:'any2', exact:2, sub:'tek kolon', desc:'İlk iki at, tek kolon', hint:'Tam 2 at seç.'},
   {k:'c2',  name:'Çifte Bahis',  mode:'legs', n:2, rule:'win', sub:'2 ayak'},
-  {k:'pi',  name:'Plase İkili',  mode:'race', rule:'pl2', sub:'plase 2 at', desc:"Plase'ye girecek iki atı bul", hint:"Plase'ye girecek atları seç (en az 2)."},
+  {k:'pi',  name:'Plase İkili',  mode:'race', rule:'pl2', tabs:2, sub:'plase 2 at', desc:"Plase'ye girecek iki atı bul", hint:"1. At ve 2. At sekmelerinden at seç. Her çift, farklı sekmelerden bir attır."},
   {k:'pi1', name:'Plase İkili (Tek kolon)', mode:'race', rule:'pl2', exact:2, sub:'tek kolon', desc:'Plase ikili, tek kolon', hint:'Tam 2 at seç.'},
   {k:'su',  name:'Sıralı Üçlü',  mode:'race', rule:'slots', slots:3, one:true, sub:'sıralı ilk 3', desc:'İlk üç atı sırasıyla bul', hint:'Atlara sırayla dokun: 1., 2. ve 3. gelecek at.'},
   {k:'suv', name:'Sıralı Üçlü (Virgüllü)', mode:'race', rule:'slots', slots:3, sub:'sıralı ilk 3', desc:'İlk üç atı sırasıyla bul, çoklu seçim', hint:'Üstteki sekmeden sırayı seç (1. / 2. / 3. At), her sıra için at işaretle.'},
-  {k:'tb',  name:'Tabela Bahis', mode:'race', rule:'any4', exact:4, sub:'ilk 4', desc:'İlk dört atı sırasız bul', hint:'Tam 4 at seç. İlk dördü sırasıyla ya da sırasız bulursan tutar.'},
+  {k:'tb',  name:'Tabela Bahis', mode:'race', rule:'any4', exact:4, tabs:4, per:1, sub:'ilk 4', desc:'İlk dört atı sırasız bul', hint:'Her sekmeye bir at seç (1.–4. At). İlk dördü sırasıyla ya da sırasız bulursan tutar.'},
   {k:'tbv', name:'Tabela (Virgüllü)', mode:'race', rule:'any4', sub:'ilk 4', desc:'İlk dört atı sırasız bul, çoklu seçim', hint:'İlk dörde girebilecek atları seç (en az 4).'},
   {k:'s5',  name:'Sıralı Beşli', mode:'race', rule:'slots', slots:5, one:true, sub:'sıralı ilk 5', desc:'İlk beş atı sırasıyla bul', hint:'Atlara sırayla dokun: 1., 2., 3., 4. ve 5. gelecek at.'},
   {k:'s5v', name:'Sıralı Beşli (Virgüllü)', mode:'race', rule:'slots', slots:5, sub:'sıralı ilk 5', desc:'İlk beş atı sırasıyla bul, çoklu seçim', hint:'Üstteki sekmeden sırayı seç (1. – 5. At), her sıra için at işaretle.'}
@@ -54,6 +54,12 @@ function kolonNow(c){
 }
 
 // Kolon sayısı (kuponun kaç farklı kombinasyondan oluştuğu)
+// Sekmeli İkili / Plase İkili: çiftler farklı sekmelerden birer attır (sırasız, tekrarsız)
+function setPairs(sets){
+  const A = (sets[0] && sets[0].p) || [], B = (sets[1] && sets[1].p) || [], seen = {};
+  A.forEach(a => B.forEach(b => { if(a !== b) seen[Math.min(a, b) + '-' + Math.max(a, b)] = 1; }));
+  return Object.keys(seen);
+}
 function kolon(c){
   const ps = c.legs.map(l => l.picks), rule = ruleOf(c);
   if(rule === 'slots'){
@@ -64,6 +70,7 @@ function kolon(c){
     })(0, []);
     return cnt;
   }
+  if((rule === 'any2' || rule === 'pl2') && c.legs[0].sets) return setPairs(c.legs[0].sets).length;
   if(rule === 'any2' || rule === 'pl2'){ const m = ps[0].length; return m * (m - 1) / 2; }
   if(rule === 'any4'){ const m = ps[0].length; return m < 4 ? 0 : m * (m - 1) * (m - 2) * (m - 3) / 24; }
   if(rule === 'gp') return ps[0].length * 2;
@@ -101,9 +108,9 @@ function legInfo(c, l){
   if(rule === 'win'){ top = [res[0]]; hit = l.picks.includes(res[0]); }
   else if(rule === 'place' || rule === 'gp'){ top = res.slice(0, p); hit = l.picks.some(n => top.includes(n)); }
   else if(rule === 'slots'){ top = [res[l.slot]]; hit = l.picks.includes(top[0]); }
-  else if(rule === 'any2'){ top = res.slice(0, 2); hit = top.every(n => l.picks.includes(n)); }
+  else if(rule === 'any2'){ top = res.slice(0, 2); hit = l.sets ? (top.length === 2 && setPairs(l.sets).includes(Math.min(top[0], top[1]) + '-' + Math.max(top[0], top[1]))) : top.every(n => l.picks.includes(n)); }
   else if(rule === 'any4'){ top = res.slice(0, 4); hit = top.length === 4 && top.every(n => l.picks.includes(n)); }
-  else { top = res.slice(0, p); hit = l.picks.filter(n => top.includes(n)).length >= 2; }   // pl2
+  else { top = res.slice(0, p); hit = l.sets ? setPairs(l.sets).some(x => x.split('-').every(n => top.includes(+n))) : l.picks.filter(n => top.includes(n)).length >= 2; }   // pl2
   const cls = n => (rule === 'gp' && n === res[0]) ? 'win' : top.includes(n) ? (rule === 'gp' ? 'pl' : 'win') : (hit ? 'dim' : 'miss');
   return {st: hit ? 'h' : 'm', cls};
 }
