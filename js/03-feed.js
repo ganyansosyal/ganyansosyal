@@ -589,6 +589,28 @@ nav,.top,#bul-sticky,.tvcard,.pstick{box-shadow:none!important}
 #tab-bulten .hr{box-shadow:none!important}
 #tab-bulten .chip.on,#tab-bulten .chip:active{box-shadow:none!important}
 .tk-t{will-change:auto!important}
+/* Tahmin Yap alt kupon paneli: sade, açık yüzey; Seçimler satırı panelin içinde */
+#draft.dr{left:12px!important;right:12px!important;max-width:476px!important;bottom:calc(68px + env(safe-area-inset-bottom,0px))!important;background:var(--sf)!important;color:var(--tx)!important;border:1px solid var(--ln)!important;border-radius:20px!important;padding:10px 12px 10px!important;gap:8px 10px!important;box-shadow:none!important;animation:none!important;display:flex;flex-wrap:wrap;align-items:center}
+#draft.dr.hidden{display:none!important}
+#draft button{background:transparent;color:inherit;transform:none!important}
+#draft #sel-sum{order:0;flex:1 1 100%;margin:0!important;padding:0 2px 8px!important;min-height:0!important;visibility:visible!important;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--ln);font-size:12.5px;color:var(--mu)}
+#draft #sel-sum b{color:var(--tx)}
+#draft #sel-sum span span{color:var(--ac)!important}
+#draft #sel-sum button{color:var(--red,#e5484d)!important;background:none!important;padding:2px 0!important;font-size:12.5px;font-weight:800}
+#draft .dr-l{order:1;flex:1 1 auto;min-width:0}
+#draft .dr-l small{color:var(--mu);opacity:1;font-size:11.5px;font-weight:700}
+#draft .dr-l b{display:block;color:var(--tx);font-size:20px;font-weight:800;letter-spacing:-.4px;line-height:1.15}
+#draft .dr-step{order:2;background:var(--sf2)!important;color:var(--tx)!important;border-radius:13px!important;padding:2px!important}
+#draft .dr-step button{color:var(--tx)!important;background:transparent!important;width:32px;height:34px}
+#draft .dr-step input{color:var(--tx)!important;width:42px}
+#draft .dr-go{order:3;background:var(--ac)!important;color:var(--on)!important;border-radius:14px!important;padding:11px 20px!important;font-size:14px;font-weight:800}
+#draft .dr-go.off{opacity:.45}
+#draft .dr-f{order:4;flex:1 1 100%;border-top:0!important;padding-top:0!important;margin:0!important;display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--mu);opacity:1!important;font-size:11.5px;font-weight:600}
+#draft .dr-nb{background:var(--sf2)!important;color:var(--ac)!important;border-radius:10px!important;padding:5px 10px!important;font-size:12px;font-weight:800;white-space:nowrap}
+#draft .dr-note{order:5;flex:1 1 100%;box-shadow:none!important;background:var(--sf2)!important;border:1px solid var(--ln)!important;color:var(--tx)!important;border-radius:12px!important;padding:9px 12px!important}
+#draft .dr-note.hidden{display:none!important}
+body[data-tab="bulten"] .app{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))!important}
+body[data-tab="bulten"].note-open .app{padding-bottom:calc(240px + env(safe-area-inset-bottom,0px))!important}
 /* Performans: ekran dışındaki kartlar çizilmez, sohbet satırları ayrı katman olmaz */
 #posts-container .card{content-visibility:auto;contain-intrinsic-size:auto 460px}
 .ch-m{will-change:auto!important}
@@ -1029,3 +1051,16 @@ window.addEventListener('load', () => {
   w.__feedReset = true;
   window.switchTab = w;
 });
+
+(function(){
+  try{
+    const d = document.getElementById('draft'), sm = document.getElementById('sel-sum');
+    if(d && sm && sm.parentNode !== d) d.insertBefore(sm, d.firstChild);
+    const n = document.getElementById('dr-note');
+    if(n && !n.classList.contains('hidden')){
+      n.classList.add('hidden');
+      const b = document.getElementById('dr-nb'); if(b) b.textContent = '+ Not ekle';
+      document.body.classList.remove('note-open');
+    }
+  }catch(e){}
+})();
