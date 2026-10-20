@@ -572,6 +572,9 @@ function injectFilterStyle(){
 #filters .f-tracked{--ac:#0ea5e9}
 [data-theme="dark"] #filters .chip,.dark #filters .chip{background:#1b2230!important}
 [data-theme="dark"] #filters .chip.on,.dark #filters .chip.on{background:color-mix(in srgb,var(--ac) 18%,transparent)!important;color:#fff!important}
+/* Performans: ekran dışındaki kartlar çizilmez, sohbet satırları ayrı katman olmaz */
+#posts-container .card{content-visibility:auto;contain-intrinsic-size:auto 460px}
+.ch-m{will-change:auto!important}
 /* Kartlar: yumuşak, ince çerçeveli, derinlik hissi */
 #posts-container .card{border-radius:22px!important;border:1px solid rgba(127,127,127,.14)!important;box-shadow:0 1px 3px rgba(15,23,42,.08)!important;margin-bottom:14px!important}
 #posts-container .card .ph-n b{font-weight:700;letter-spacing:-.2px}
