@@ -609,6 +609,16 @@ nav,.top,#bul-sticky,.tvcard,.pstick{box-shadow:none!important}
 #draft .dr-nb{background:color-mix(in srgb,var(--on) 18%,transparent)!important;color:var(--on)!important;border-radius:10px!important;padding:5px 10px!important;font-size:12px;font-weight:800;white-space:nowrap}
 #draft .dr-note{order:5;flex:1 1 100%;box-shadow:none!important;background:var(--sf)!important;border:0!important;color:var(--tx)!important;border-radius:12px!important;padding:9px 12px!important}
 #draft .dr-note.hidden{display:none!important}
+/* Kupon paneli: varsayılan kapalı (ince şerit); kupon tamamlanınca Paylaş görünür; tutamaçtan ya da şeride dokunarak açılır */
+#draft .dr-tg{position:absolute;top:0;left:50%;margin-left:-32px;width:64px;height:20px;padding:0;background:transparent!important;display:flex;align-items:center;justify-content:center}
+#draft .dr-tg i{display:block;width:34px;height:4px;border-radius:3px;background:var(--on);opacity:.55}
+#draft.dr{padding-top:18px!important}
+#draft.min{padding:18px 12px 10px!important;gap:0 10px!important;cursor:pointer}
+#draft.min #sel-sum,#draft.min .dr-step,#draft.min .dr-f,#draft.min .dr-note{display:none!important}
+#draft.min .dr-go.off{display:none!important}
+#draft.min .dr-l b{font-size:19px}
+#draft.min .dr-l small::after{content:" · detay";font-weight:600;opacity:.8}
+body[data-tab="bulten"].dr-min .app,body[data-tab="bulten"].dr-min.note-open .app{padding-bottom:calc(135px + env(safe-area-inset-bottom,0px))!important}
 body[data-tab="bulten"] .app{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))!important}
 body[data-tab="bulten"].note-open .app{padding-bottom:calc(240px + env(safe-area-inset-bottom,0px))!important}
 /* Performans: ekran dışındaki kartlar çizilmez, sohbet satırları ayrı katman olmaz */
@@ -1083,4 +1093,26 @@ window.addEventListener('load', () => {
   v.addEventListener('scroll', sched);
   document.addEventListener('focusin', () => { sched(); setTimeout(sched, 250); });
   document.addEventListener('focusout', () => setTimeout(sched, 80));
+})();
+
+/* Kupon paneli aç/kapa */
+(function(){
+  const d = document.getElementById('draft'); if(!d) return;
+  d.classList.add('min');
+  const g = document.createElement('button');
+  g.type = 'button'; g.className = 'dr-tg'; g.setAttribute('aria-label', 'Kupon panelini aç / kapat'); g.innerHTML = '<i></i>';
+  d.appendChild(g);
+  function sync(){
+    if(d.classList.contains('hidden') && !d.classList.contains('min')) d.classList.add('min');   // seçim bitince tekrar kapalı başlar
+    document.body.classList.toggle('dr-min', d.classList.contains('min'));
+  }
+  function toggle(){
+    d.classList.toggle('min');
+    if(d.classList.contains('min')){ try{ const a = document.activeElement; if(a && d.contains(a)) a.blur(); }catch(e){} }
+    sync();
+  }
+  g.addEventListener('click', e => { e.stopPropagation(); toggle(); });
+  d.addEventListener('click', e => { if(d.classList.contains('min') && !e.target.closest('button,input')) toggle(); });
+  new MutationObserver(sync).observe(d, {attributes: true, attributeFilter: ['class']});
+  sync();
 })();
