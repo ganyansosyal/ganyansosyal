@@ -3181,3 +3181,15 @@ nav button.nav-set .ni:after{animation:none!important}
 /* Galibiyet/yarış/galop kartları yüklenmeden önce de aynı yüksekliği ayırsın: veri gelince sayfa zıplamasın */
 .hgal.hyar,.hgal[data-k="gal"]{min-height:59px}
 .hgal.hgop{min-height:72px}
+
+/* Sekmeli düzen: çok ayaklı bahiste ayak sekmeleri (altında koşu numarası) */
+#race-tabs .chip.leg{display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.15;min-width:64px}
+#race-tabs .chip.leg small{font-size:9px;font-weight:700;opacity:.75}
+#race-tabs .chip.leg.fin::after{display:none}
+
+/* Ayak grubu sekmeleri (3-4-5 | 7-8-9) */
+#start-tabs{padding-bottom:6px;gap:5px}
+#start-tabs .chip{padding:5px 11px;font-size:11.5px;border-radius:10px;border-width:1px}
+#start-tabs .chip:not(.on){background:var(--sf);border:1.5px solid color-mix(in srgb,var(--mu) 45%,var(--ln));color:var(--tx);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+#start-tabs .chip.fin::after{display:none}
+#start-tabs .chip:disabled{opacity:.45}
