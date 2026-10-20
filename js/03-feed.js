@@ -554,12 +554,17 @@ function injectFilterStyle(){
   st.textContent = `
 *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 .nf-flash,.nf-flash::before,.nf-flash::after{animation:revert!important}
-#filters{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:7px!important;overflow:visible!important;flex-wrap:wrap!important;padding:2px 0 4px!important;margin:4px 0 8px!important}
-#filters .chip{--ac:#10b981;--ac2:#059669;display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-width:0!important;height:34px!important;min-height:0!important;padding:0 6px!important;margin:0!important;border:1px solid rgba(127,127,127,.22)!important;border-radius:12px!important;background:rgba(127,127,127,.08)!important;color:inherit!important;opacity:.85;font-size:12.5px!important;font-weight:700!important;line-height:1!important;letter-spacing:-.1px;text-align:center!important;white-space:nowrap!important;box-shadow:none!important;transform:none!important;-webkit-tap-highlight-color:transparent}
-#filters .chip svg{display:none!important}
-#filters .chip span{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#filters .chip:active{background:color-mix(in srgb,var(--ac) 18%,transparent)!important;border-color:var(--ac)!important}
-#filters .chip.on{background:linear-gradient(135deg,var(--ac),var(--ac2))!important;border-color:transparent!important;color:#fff!important;opacity:1;box-shadow:0 3px 10px color-mix(in srgb,var(--ac) 35%,transparent)!important}
+#filters{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:6px!important;overflow:visible!important;flex-wrap:wrap!important;padding:7px!important;margin:6px 0 10px!important;border-radius:22px!important;background:rgba(127,127,127,.08)!important;border:1px solid rgba(127,127,127,.16)!important;box-shadow:inset 0 1px 2px rgba(0,0,0,.04)!important}
+#filters .chip{--ac:#10b981;--ac2:#059669;position:relative;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:5px!important;width:100%!important;min-width:0!important;height:auto!important;min-height:0!important;padding:9px 3px 8px!important;margin:0!important;border:0!important;border-radius:16px!important;background:transparent!important;color:inherit!important;font-size:12px!important;font-weight:700!important;line-height:1.1!important;letter-spacing:-.1px;text-align:center!important;white-space:nowrap!important;box-shadow:none!important;transform:none!important;-webkit-tap-highlight-color:transparent}
+#filters .chip svg{display:block!important;width:30px!important;height:30px!important;padding:7px!important;box-sizing:border-box!important;flex:none!important;border-radius:11px!important;fill:none!important;stroke:currentColor!important;stroke-width:2!important;stroke-linecap:round!important;stroke-linejoin:round!important;background:rgba(127,127,127,.14)!important;opacity:.8}
+#filters .chip span{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.85}
+#filters .chip .fc{position:absolute;top:5px;right:7px;min-width:17px;height:17px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:rgba(127,127,127,.22);color:inherit;font:700 10.5px/17px inherit;font-style:normal;text-align:center}
+#filters .chip:active{background:color-mix(in srgb,var(--ac) 16%,transparent)!important}
+#filters .chip:active svg{background:color-mix(in srgb,var(--ac) 28%,transparent)!important;stroke:var(--ac)!important;opacity:1}
+#filters .chip.on{background:linear-gradient(145deg,var(--ac),var(--ac2))!important;color:#fff!important;box-shadow:0 4px 12px color-mix(in srgb,var(--ac) 38%,transparent)!important}
+#filters .chip.on svg{background:rgba(255,255,255,.24)!important;stroke:#fff!important;opacity:1}
+#filters .chip.on span{opacity:1}
+#filters .chip.on .fc{background:rgba(255,255,255,.28);color:#fff}
 #filters .f-all{--ac:#10b981;--ac2:#047857}
 #filters .f-mine{--ac:#6366f1;--ac2:#4338ca}
 #filters .f-lost{--ac:#ef4444;--ac2:#b91c1c}
@@ -599,7 +604,16 @@ function renderFeedNow(){
     tracked: '<path d="M6 3h12v18l-6-4-6 4V3z"/>'
   };
   if(!F.some(x => x[0] === filter)) filter = 'all';   // kaldırılan filtre seçili kalmışsa Tümü'ne dön
-  $('filters').innerHTML = F.map(([k,l]) => `<button class="chip f-${k} ${filter===k?'on':''}" onclick="filterFeed('${k}')"><svg viewBox="0 0 24 24" aria-hidden="true">${FI[k]}</svg><span>${l}</span></button>`).join('');
+  const FC = (() => { const c = {}; try{
+    const day = posts.filter(p => !p.hidden && postDay(p) === feedIso());
+    c.all = day.filter(p => !isLost(p) && !isWon(p)).length;
+    c.lost = day.filter(isLost).length;
+    c.winners = day.filter(p => isWon(p)).length;
+    c.follow = day.filter(p => following[p.author] && !isLost(p) && !isWon(p)).length;
+    c.mine = posts.filter(p => !p.hidden && p.author === ME).length;
+    c.tracked = posts.filter(p => !p.hidden && p.coupon && p.author !== ME && tracked[tk(p)]).length;
+  }catch(e){} return c; })();
+  $('filters').innerHTML = F.map(([k,l]) => `<button class="chip f-${k} ${filter===k?'on':''}" onclick="filterFeed('${k}')">${FC[k] ? `<em class="fc">${FC[k] > 99 ? '99+' : FC[k]}</em>` : ''}<svg viewBox="0 0 24 24" aria-hidden="true">${FI[k]}</svg><span>${l}</span></button>`).join('');
   $('draft-chips').innerHTML = selList().length ? '<div class="cmp-hint">Kuponun notunla birlikte paylaşılacak</div>' + couponHtml(buildCoupon(), true) : '';
   
   const fiso = feedIso();
