@@ -352,7 +352,7 @@ function postHtml(p){
      <div class="ph-act">
        ${followBtn(p.author)}
        ${admDelBtn(p)}
-       ${p.author === ME && !isAdminKey(ME) && canDelete(p).ok ? `<button class="px" onclick="askDeletePost(${p.id})" aria-label="Kuponu sil" title="Kuponu sil" style="background:#e53935;color:#fff;border-radius:12px;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(229,57,53,.35)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg></button>` : ''}
+       ${p.author === ME && canDelete(p).ok ? `<button class="px" onclick="askDeletePost(${p.id})" aria-label="Kuponu sil" title="Kuponu sil" style="background:#e53935;color:#fff;border-radius:12px;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(229,57,53,.35)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg></button>` : ''}
      </div>
    </div>
    <div class="txt">${esc(p.text)}</div>
