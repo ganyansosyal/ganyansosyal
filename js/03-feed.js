@@ -546,17 +546,20 @@ function feedDayListen(){
 }
 // Peş peşe gelen yenilemeleri (ör. iki snapshot arka arkaya) tek çizimde topla; ilk çağrı hemen çalışır
 
-// ── Modern filtre hapları (3 sütun x 2 satır, kompakt, animasyonsuz) ──
+// ── Modern filtre hapları (3 sütun x 2 satır, kompakt) + tüm animasyonlar kapalı ──
 function injectFilterStyle(){
   if(document.getElementById('filters-style')) return;
   const st = document.createElement('style');
   st.id = 'filters-style';
   st.textContent = `
+*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+.nf-flash,.nf-flash::before,.nf-flash::after{animation:revert!important}
 #filters{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:7px!important;overflow:visible!important;flex-wrap:wrap!important;padding:2px 0 4px!important;margin:4px 0 8px!important}
-#filters .chip{--ac:#10b981;--ac2:#059669;display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-width:0!important;height:34px!important;min-height:0!important;padding:0 6px!important;margin:0!important;border:1px solid color-mix(in srgb,var(--ac) 28%,transparent)!important;border-radius:12px!important;background:color-mix(in srgb,var(--ac) 10%,transparent)!important;color:var(--ac2)!important;font-size:12.5px!important;font-weight:700!important;line-height:1!important;letter-spacing:-.1px;text-align:center!important;white-space:nowrap!important;box-shadow:none!important;transition:none!important;animation:none!important;transform:none!important;-webkit-tap-highlight-color:transparent}
+#filters .chip{--ac:#10b981;--ac2:#059669;display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-width:0!important;height:34px!important;min-height:0!important;padding:0 6px!important;margin:0!important;border:1px solid rgba(127,127,127,.22)!important;border-radius:12px!important;background:rgba(127,127,127,.08)!important;color:inherit!important;opacity:.85;font-size:12.5px!important;font-weight:700!important;line-height:1!important;letter-spacing:-.1px;text-align:center!important;white-space:nowrap!important;box-shadow:none!important;transform:none!important;-webkit-tap-highlight-color:transparent}
 #filters .chip svg{display:none!important}
 #filters .chip span{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#filters .chip.on{background:linear-gradient(135deg,var(--ac),var(--ac2))!important;border-color:transparent!important;color:#fff!important;box-shadow:0 3px 10px color-mix(in srgb,var(--ac) 35%,transparent)!important;transform:none!important}
+#filters .chip:active{background:color-mix(in srgb,var(--ac) 18%,transparent)!important;border-color:var(--ac)!important}
+#filters .chip.on{background:linear-gradient(135deg,var(--ac),var(--ac2))!important;border-color:transparent!important;color:#fff!important;opacity:1;box-shadow:0 3px 10px color-mix(in srgb,var(--ac) 35%,transparent)!important}
 #filters .f-all{--ac:#10b981;--ac2:#047857}
 #filters .f-mine{--ac:#6366f1;--ac2:#4338ca}
 #filters .f-lost{--ac:#ef4444;--ac2:#b91c1c}
