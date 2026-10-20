@@ -105,8 +105,17 @@ function nfOpen(id){
 }
 // Bildirimdeki kuponu akışta bulur: günü açar, kupona kaydırır ve kısa süre vurgular
 let _flashPid = 0, _flashUntil = 0;
+// Kuponun durumuna göre doğru sekmeyi seç: kaybeden → Kaybedenler, tutan → Tutanlar, diğerleri → Akış
+function nfFilterFor(p, n){
+  try{
+    if(p && p.coupon){ if(isLost(p)) return 'lost'; if(isWon(p)) return 'winners'; return 'all'; }
+  }catch(e){}
+  if(n && n.type === 'lose') return 'lost';
+  if(n && n.type === 'win') return 'winners';
+  return 'all';
+}
 function showPostCard(n, after){
-  filter = 'all';
+  filter = nfFilterFor(posts.find(x => x.id === n.pid || x.docId === n.pd), n);
   const ts = parseInt(String(n.pd || '').split('_')[0], 10);
   const known = posts.find(x => x.id === n.pid || x.docId === n.pd);
   const iso = known ? postDay(known) : (n.iso || (ts ? isoOfTs(ts) : ''));
@@ -122,6 +131,10 @@ function showPostCard(n, after){
       setTimeout(() => { try{ el.classList.remove('nf-flash'); }catch(e){} }, 3000);
       if(after) setTimeout(() => after(p), 800);   // kaydırma bitince mesaj penceresi açılır
       return;
+    }
+    if(p){   // kupon yüklendi ama bu sekmede görünmüyor (durumu sonradan değişti / geç yüklendi): doğru sekmeye geç
+      const want = nfFilterFor(p, n);
+      if(want !== filter){ filter = want; renderFeed(); }
     }
     if(++tries < 14) setTimeout(go, 350);
     else showToast(n.type === 'lose' ? 'Kaybeden kupon silindi.' : 'Gönderi artık yok.');
