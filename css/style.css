@@ -3298,3 +3298,29 @@ body::before{display:none}
   #filters .chip svg{width:25px;height:25px;padding:5px}
   #filters .chip.f-all{min-width:44px}
 }
+
+/* Akış sekmeleri v4: sade, ikonsuz, kutusuz; 6 sekme tek satırda taşmadan sığar, seçili olan yeşil hap */
+#filters.chips{
+  display:flex;flex-wrap:nowrap;gap:2px;overflow:hidden;
+  margin:10px 0 8px;padding:0;
+  background:none;border:0;border-radius:0;box-shadow:none;
+}
+#filters .chip,#filters .chip.f-all{
+  flex:1 1 auto;min-width:0;
+  flex-direction:row;gap:0;padding:8px 5px;border-radius:14px;
+  font-size:11px;font-weight:700;letter-spacing:-.1px;line-height:1;white-space:nowrap;text-align:center;
+  background:transparent;border:0;box-shadow:none;color:var(--mu);
+}
+#filters .chip svg{display:none}
+#filters .chip span{overflow:visible;text-overflow:clip}
+#filters .chip.on{
+  color:#fff;font-weight:800;
+  background:linear-gradient(135deg,var(--fc),var(--fc2));
+  box-shadow:0 6px 14px -6px color-mix(in srgb,var(--fc) 70%,transparent);
+}
+@media (max-width:400px){
+  #filters .chip,#filters .chip.f-all{font-size:10px;padding:8px 4px}
+}
+@media (max-width:350px){
+  #filters .chip,#filters .chip.f-all{font-size:9px;padding:8px 3px}
+}
