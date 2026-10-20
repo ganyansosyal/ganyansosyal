@@ -556,7 +556,7 @@ function renderFeedNow(){
   $('cmp-av').innerHTML = av(ME);
   peopleStrip();
   const F = [
-    ['all','Tümü'],
+    ['all','Akış'],
     ['follow','Takip Ettiklerim'],
     ['winners','Tutanlar'],
     ['tracked','Kupon Takip']
@@ -574,6 +574,7 @@ function renderFeedNow(){
   if(filter === 'tracked') l = base.filter(p => p.coupon && p.author !== ME && tracked[tk(p)]);
   if(filter === 'follow') l = base.filter(p => following[p.author]);
   if(filter !== 'tracked') l = l.filter(p => !isLost(p));   // Kaybeden kuponlar akıştan kalkar (profilde görünmeye devam eder); Kupon Takip'te kalır
+  if(filter === 'all' || filter === 'follow') l = l.filter(p => !isWon(p));   // Tutan kuponlar sadece Tutanlar sekmesinde; akışta yeni, bekleyen ve devam eden kuponlar kalır
   // Sıralama: en iyiden en kötüye. Tuttu > devam ediyor (çok ayak tutan önce) > bekliyor > kaybetti > kuponsuz yazılar.
   // Eşitlikte: kupon puanı, sonra beğeni + yorum, sonra yeni olan önce.
   const eng = p => (p.likes || 0) + (p.comments ? p.comments.length : 0);
