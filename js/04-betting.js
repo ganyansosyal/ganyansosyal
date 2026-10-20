@@ -714,14 +714,6 @@ function _renderBulten(){
   const mine = selList().filter(x => x.c === city && x.r === race);
   const fin = raceDone(city, race), rres = raceRes(city, race) || [];
   setHtml($('res-panel'), resPanelHtml(city, race));
-  { // H (hepsi) / S (sil) çubuğu: sıralı virgüllüde (dokunma sırası) sadece S
-    let hb = $('hs-bar');
-    if(!hb){ hb = document.createElement('div'); hb.id = 'hs-bar'; hb.style.cssText = 'display:flex;align-items:center;gap:8px;margin:0 2px 8px'; const hl = $('horses-list'); if(hl && hl.parentNode) hl.parentNode.insertBefore(hb, hl); }
-    const canH = !(T.one || T.per || T.exact), has = mine.length > 0, off = fin && !admTest();
-    const bst = 'border:1px solid var(--line,#0002);border-radius:8px;min-width:34px;padding:6px 10px;font-weight:800;font-size:14px;background:var(--card,#fff);color:inherit';
-    const hh = off ? '' : `${canH ? `<button style="${bst}" onclick="hepsiSec()" aria-label="Hepsini seç">H</button>` : ''}<button style="${bst};${has ? '' : 'opacity:.45'}" onclick="silSec()" aria-label="Seçimleri sil">S</button><span style="font-size:12.5px;font-weight:700;opacity:.7">AT</span>`;
-    if(hb._h !== hh){ hb._h = hh; hb.innerHTML = hh; }
-  }
   let hlist = horsesFor(city, race);
   if(fin && rres.length) hlist = hlist.slice().sort((a, b) => { const ia = rres.indexOf(a.no), ib = rres.indexOf(b.no); return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib) || a.no - b.no; });
   setHtml($('horses-list'), hlist.map(h => {
@@ -772,9 +764,12 @@ function _renderBulten(){
     if(document.body) document.body.classList.toggle('has-draft', true);
     if(document.activeElement !== $('misli-out')) $('misli-out').value = misli;
     $('draft-go').classList.toggle('off', !full || !asgOk || !maxOk);
-    $('sel-sum').innerHTML = T.vir
-      ? `<span><b>Seçimler:</b> ${virOrder().map(h => h.no).join(', ')}</span><span><button onclick="virSirala()">Sırala</button> <button onclick="clearSel()">Temizle</button></span>`
-      : `<span><b>${esc(city)}</b> · ${c.ord ? c.ord + '. ' : ''}${esc(c.type)}</span><button onclick="clearSel()">Temizle</button>`;
+    const rr = c.legs[0].r, nz = x => x.map(h => h.no).sort((p, q) => p - q).join(',') || '-';
+    const selTxt = T.vir ? virOrder().map(h => h.no).join(', ')
+      : T.mode === 'legs' ? c.legs.map(l => l.picks.join(',') || '-').join(' / ')
+      : (T.slots || T.tabs) ? Array.from({length: T.tabs || T.slots}, (_, i) => nz(picksIn(rr, i))).join(' - ')
+      : c.legs[0].picks.join(', ');
+    $('sel-sum').innerHTML = `<span><b>Seçimler:</b> <span style="color:var(--gold,#f5c518);font-weight:800">${selTxt}</span></span><button onclick="clearSel()">Temizle</button>`;
   }
 }
 

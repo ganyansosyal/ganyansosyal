@@ -199,27 +199,6 @@ function toggleHorse(no){
   }
 }
 
-// H (hepsini seç) / S (seçimleri sil): görünen sıra/koşu için
-function hsAktif(){
-  const T = curT(); if(!T) return false;
-  if(raceDone(city, race) && !admTest()) return false;
-  if(T.mode === 'race' && !oyunMusait(T, city, race)) return false;
-  if(T.mode === 'legs' && !legRaces().includes(race)) return false;
-  return true;
-}
-function hsSlot(){ const T = curT(); return ((T.slots && !T.one) || T.tabs) ? curSlot : 0; }
-function hepsiSec(){
-  if(!hsAktif()) return;
-  const slot = hsSlot();
-  horsesFor(city, race).filter(h => !h.kosmaz).forEach(h => { const k = kk(race, slot, h.no); if(!sel[k]) sel[k] = {c: city, r: race, slot, no: h.no, name: h.name}; });
-  renderBulten();
-}
-function silSec(){
-  const T = curT(), slot = hsSlot();
-  Object.keys(sel).forEach(k => { const h = sel[k]; if(h.c === city && h.r === race && (T.one || h.slot === slot)) delete sel[k]; });
-  renderBulten();
-}
-
 function toggleNote(){
   const n = $('dr-note'), open = n.classList.toggle('hidden') === false;
   document.body.classList.toggle('note-open', open);
