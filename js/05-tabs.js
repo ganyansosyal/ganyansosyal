@@ -484,7 +484,7 @@ function renderProfile(){
     : `background:linear-gradient(135deg,${colorOf(viewing)},color-mix(in srgb,${colorOf(viewing)} 35%,#0A0F1E))`;
   
   $('profile-body').innerHTML = `
-    <div class="pstick">
+    <div class="pstick" style="position:static">
       <div class="cv bcv">
         
         <svg class="bcv-bg" viewBox="0 0 400 112" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
