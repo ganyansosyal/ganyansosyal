@@ -173,11 +173,6 @@ function toggleHorse(no){
       if(!T.vir && slot >= T.slots){ showToast(`En fazla ${T.slots} at seçebilirsin.`); return; }
       add(slot);
     }
-    if(T.vir){   // virgüllü: silince sıra boşluğu kalmasın, kalan atlar seçim sırasıyla 1..n yeniden numaralanır
-      const cur = Object.keys(sel).map(q => ({q, h: sel[q]})).filter(x => x.h.c === city && x.h.r === race).sort((a, b) => a.h.slot - b.h.slot);
-      cur.forEach(x => delete sel[x.q]);
-      cur.forEach((x, i) => { x.h.slot = i; sel[kk(race, i, x.h.no)] = x.h; });
-    }
   } else {
     const slot = (T.slots || T.tabs) ? curSlot : 0, k = kk(race, slot, no);
     if(sel[k]) delete sel[k];
@@ -202,6 +197,27 @@ function toggleHorse(no){
     const k2 = document.querySelector('#horses-list .hr[data-no="' + no + '"]');
     if(k2){ const d = k2.getBoundingClientRect().top - t0; if(Math.abs(d) > 1) window.scrollBy({top: d, behavior: 'instant'}); }
   }
+}
+
+// H (hepsini seç) / S (seçimleri sil): görünen sıra/koşu için
+function hsAktif(){
+  const T = curT(); if(!T) return false;
+  if(raceDone(city, race) && !admTest()) return false;
+  if(T.mode === 'race' && !oyunMusait(T, city, race)) return false;
+  if(T.mode === 'legs' && !legRaces().includes(race)) return false;
+  return true;
+}
+function hsSlot(){ const T = curT(); return ((T.slots && !T.one) || T.tabs) ? curSlot : 0; }
+function hepsiSec(){
+  if(!hsAktif()) return;
+  const slot = hsSlot();
+  horsesFor(city, race).filter(h => !h.kosmaz).forEach(h => { const k = kk(race, slot, h.no); if(!sel[k]) sel[k] = {c: city, r: race, slot, no: h.no, name: h.name}; });
+  renderBulten();
+}
+function silSec(){
+  const T = curT(), slot = hsSlot();
+  Object.keys(sel).forEach(k => { const h = sel[k]; if(h.c === city && h.r === race && (T.one || h.slot === slot)) delete sel[k]; });
+  renderBulten();
 }
 
 function toggleNote(){

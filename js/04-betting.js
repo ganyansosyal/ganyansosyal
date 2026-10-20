@@ -68,10 +68,10 @@ function kuralMetni(T){
   else if(T.rule === 'any2') m = 'İlk iki atı sırasız bil. Hangisinin birinci, hangisinin ikinci geldiği önemli değil.';
   else if(T.rule === 'pl2') m = "Plase'ye giren iki atı sırasız bil.";
   else if(T.rule === 'any4') m = 'İlk dört atı bil (tabela). Sırasıyla bilirsen sıralı ikramiye, sırasız bilirsen sırasız ikramiye kazanırsın.';
-  else if(T.rule === 'slots' && T.vir) m = `En az ${T.slots} at seç, dokunma sırası listendeki sıra olur. İlk ${T.slots} at listende, aynı sırayla yer alırsa kazanırsın. Bahis sayısı: seçtiğin atlardan ${T.slots}'li sıralı kombinasyon sayısı (12 at seçersen 792).`;
+  else if(T.rule === 'slots' && T.vir) m = `En az ${T.slots} at seç, dokunma sırası listendeki sıra olur. İlk ${T.slots} at listende, aynı sırayla yer alırsa kazanırsın. Bahis sayısı: seçtiğin atlardan ${T.slots}'li sıralı kombinasyon sayısı (12 at seçersen ${comb(12, T.slots)}).`;
   else if(T.rule === 'slots') m = `İlk ${T.slots} atı geliş sırasıyla bil.`;
   else m = T.desc || '';
-  if(/Virgüllü/.test(T.name)) ek.push('Her sıra için birden fazla at seçebilirsin; kolon sayısı arttıkça tutar artar.');
+  if(/Virgüllü/.test(T.name) && !T.vir) ek.push('Her sıra için birden fazla at seçebilirsin; kolon sayısı arttıkça tutar artar.');
   if(/Tek kolon/.test(T.name)) ek.push('Tek kolondur: tam olarak ' + (T.exact || 2) + ' at seçilir.');
   return m + (ek.length ? ' ' + ek.join(' ') : '') + ` Birim fiyat ${bf} ₺ · asgari kupon ${money(ASGARI)}.`;
 }
@@ -111,7 +111,7 @@ function virSiralaCiz(){
   const btn = 'border:0;border-radius:10px;padding:8px 14px;font-size:18px;background:#e6efe9;color:#111';
   o.innerHTML = `<div style="background:#fff;color:#111;width:100%;max-width:520px;max-height:80vh;overflow:auto;border-radius:18px 18px 0 0;padding:14px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b style="font-size:17px">Sıralamayı düzenle</b><button style="${btn};font-size:15px" onclick="virSiralaKapat()">Bitti</button></div>
-    <div style="font-size:13px;opacity:.7;margin-bottom:8px">Yukarıdaki at önce gelir. Tutmak için ilk 5 at bu sırayla listede yer almalı.</div>
+    <div style="font-size:13px;opacity:.7;margin-bottom:8px">Yukarıdaki at önce gelir. Tutmak için ilk ${(curT() || {}).slots || 5} at bu sırayla listede yer almalı.</div>
     <button style="${btn};font-size:14px;margin-bottom:8px" onclick="virNumaraSirala()">Numaraya göre diz</button>
     ${list.map((h, i) => `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #0001"><b style="width:26px;text-align:center">${i + 1}</b><b style="width:30px">${h.no}</b><span style="flex:1">${esc(h.name || '')}</span><button style="${btn}" onclick="virMove(${i},-1)" ${i === 0 ? 'disabled' : ''}>▲</button><button style="${btn}" onclick="virMove(${i},1)" ${i === list.length - 1 ? 'disabled' : ''}>▼</button></div>`).join('')}
   </div>`;
@@ -714,6 +714,14 @@ function _renderBulten(){
   const mine = selList().filter(x => x.c === city && x.r === race);
   const fin = raceDone(city, race), rres = raceRes(city, race) || [];
   setHtml($('res-panel'), resPanelHtml(city, race));
+  { // H (hepsi) / S (sil) çubuğu: sıralı virgüllüde (dokunma sırası) sadece S
+    let hb = $('hs-bar');
+    if(!hb){ hb = document.createElement('div'); hb.id = 'hs-bar'; hb.style.cssText = 'display:flex;align-items:center;gap:8px;margin:0 2px 8px'; const hl = $('horses-list'); if(hl && hl.parentNode) hl.parentNode.insertBefore(hb, hl); }
+    const canH = !(T.one || T.per || T.exact), has = mine.length > 0, off = fin && !admTest();
+    const bst = 'border:1px solid var(--line,#0002);border-radius:8px;min-width:34px;padding:6px 10px;font-weight:800;font-size:14px;background:var(--card,#fff);color:inherit';
+    const hh = off ? '' : `${canH ? `<button style="${bst}" onclick="hepsiSec()" aria-label="Hepsini seç">H</button>` : ''}<button style="${bst};${has ? '' : 'opacity:.45'}" onclick="silSec()" aria-label="Seçimleri sil">S</button><span style="font-size:12.5px;font-weight:700;opacity:.7">AT</span>`;
+    if(hb._h !== hh){ hb._h = hh; hb.innerHTML = hh; }
+  }
   let hlist = horsesFor(city, race);
   if(fin && rres.length) hlist = hlist.slice().sort((a, b) => { const ia = rres.indexOf(a.no), ib = rres.indexOf(b.no); return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib) || a.no - b.no; });
   setHtml($('horses-list'), hlist.map(h => {
