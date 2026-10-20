@@ -589,10 +589,10 @@ nav,.top,#bul-sticky,.tvcard,.pstick{box-shadow:none!important}
 #tab-bulten .hr{box-shadow:none!important}
 #tab-bulten .chip.on,#tab-bulten .chip:active{box-shadow:none!important}
 .tk-t{will-change:auto!important}
-/* Tahmin Yap'ta geri butonu: düz yeşil hap, efektsiz, ok + "Geri" yan yana */
-body[data-tab="bulten"] #menu-btn{display:inline-flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:2px!important;width:auto!important;min-width:0!important;height:44px!important;padding:0 15px 0 9px!important;border:0!important;outline:0!important;border-radius:999px!important;background:#10b981!important;color:#fff!important;box-shadow:none!important;filter:none!important;transition:none!important;transform:none!important;-webkit-tap-highlight-color:transparent}
-body[data-tab="bulten"] #menu-btn:active{background:#059669!important;transform:none!important;box-shadow:none!important}
-body[data-tab="bulten"] #menu-btn svg{width:20px!important;height:20px!important;flex:none;stroke-width:2.5}
+/* Tahmin Yap'ta geri butonu: "Değiştir" gibi küçük düz yeşil buton, ok + "Geri" yan yana */
+body[data-tab="bulten"] #menu-btn{display:inline-flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:1px!important;width:auto!important;min-width:0!important;height:36px!important;padding:0 12px 0 7px!important;border:0!important;outline:0!important;border-radius:12px!important;background:#0f9d6e!important;color:#fff!important;box-shadow:none!important;filter:none!important;transition:none!important;transform:none!important;-webkit-tap-highlight-color:transparent}
+body[data-tab="bulten"] #menu-btn:active{background:#0b8a5f!important}
+body[data-tab="bulten"] #menu-btn svg{width:17px!important;height:17px!important;flex:none;stroke-width:2.6}
 body[data-tab="bulten"] #menu-btn .bk-t{font-size:14px;font-weight:700;line-height:1;letter-spacing:-.1px;color:#fff}
 /* Tahmin Yap kupon çubuğu: koyu lacivert zemin, nane yeşili vurgu; üstte ayak çipleri, altta fiyat · misli · Paylaş */
 #draft.dr{--dk:#FFFFFF;--mint:#059669;--mint-on:#FFFFFF;--tx:#0f172a;left:0!important;right:0!important;max-width:500px!important;margin:0 auto!important;bottom:0!important;background:var(--dk)!important;color:var(--tx,#0f172a)!important;border:0!important;border-top:1px solid rgba(15,23,42,.1)!important;border-radius:22px 22px 0 0!important;padding:10px clamp(10px,4vw,14px) calc(12px + env(safe-area-inset-bottom,0px))!important;box-shadow:0 -6px 20px rgba(15,23,42,.10)!important;animation:none!important;overflow:hidden;
