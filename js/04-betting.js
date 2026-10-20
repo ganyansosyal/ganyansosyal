@@ -640,15 +640,16 @@ function _renderBulten(){
     const unit = (T.slots || T.tabs) ? 'sıra' : 'ayak';
     const k = kolon(c);
     const full = done === total && k > 0;
+    const ayniAt = !!T.tabs && !T.per && done === total && k === 0;   // İkili / Plase İkili: iki sekmede de aynı tek at seçili
     const multi = total > 1;
     const kn = full ? k : kolonNow(c);
     const tutar = (full ? k : 0) * birimFiyat(T.name, city) * misli, asgOk = tutar >= ASGARI, maxOk = !(limitliMi(T.name) && tutar > kuponMax());
     $('coupon-count-text').textContent = full ? (!maxOk ? `Limit ${money(kuponMax())} · ${money(tutar - kuponMax())} fazla` : asgOk ? 'Kupon hazır' : `Asgari ${money(ASGARI)} · ${money(ASGARI - tutar)} eksik`)
-      : (multi ? `${done}/${total} ${unit} · ${total - done} eksik` : `${n} at seçili · eksik seçim`);
+      : (ayniAt ? 'Sekmelerde farklı atlar seç' : multi ? `${done}/${total} ${unit} · ${total - done} eksik` : `${n} at seçili · eksik seçim`);
     $('coupon-total-price').textContent = kn ? money(kn * birimFiyat(T.name, city) * misli) : '—';
     $('coupon-formula').textContent = kn
       ? `${kn} kolon × ${fiyatYazi(birimFiyat(T.name, city))} ₺ × ${misli} misli` + (full ? '' : ' · şimdilik')
-      : 'Fiyat için at seç';
+      : `Birim fiyat ${fiyatYazi(birimFiyat(T.name, city))} ₺ · ` + (ayniAt ? 'aynı atı iki sekmede seçtin, farklı bir at ekle' : 'fiyat için at seç');
     if(document.body) document.body.classList.toggle('has-draft', true);
     if(document.activeElement !== $('misli-out')) $('misli-out').value = misli;
     $('draft-go').classList.toggle('off', !full || !asgOk || !maxOk);
