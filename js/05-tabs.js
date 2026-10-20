@@ -477,7 +477,7 @@ function renderProfile(){
   const me = viewing === ME;
   const f = !!following[viewing];
   const mine = posts.filter(p => p.author === viewing && !p.hidden);
-  const list = mine.filter(p => ptab !== 'w' || isWon(p));
+  const list = mine.filter(p => ptab === 'w' ? isWon(p) : !isWon(p));   // Tutan kuponlar sadece Tutanlar sekmesinde; Kuponlar sekmesinde kalmaz
   const nf = Object.values(following).filter(Boolean).length;
   const cvStyle = (me && myCover)
     ? `background:var(--my-cover) center/cover no-repeat`
