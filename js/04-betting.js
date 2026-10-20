@@ -72,7 +72,7 @@ function kuralMetni(T){
   else if(T.rule === 'slots') m = `İlk ${T.slots} atı geliş sırasıyla bil.`;
   else m = T.desc || '';
   if(/Virgüllü/.test(T.name) && !T.vir) ek.push('Her sıra için birden fazla at seçebilirsin; kolon sayısı arttıkça tutar artar.');
-  if(/Tek kolon/.test(T.name)) ek.push('Tek kolondur: tam olarak ' + (T.exact || 2) + ' at seçilir.');
+  if(/Tek kolon/.test(T.name)) ek.push(T.exact ? 'Tek kolondur: tam olarak ' + T.exact + ' at seçilir.' : 'Tek kolondur: en az 2 at seç, seçtiğin atlardan olası tüm ikili çiftler oynanır.');
   return m + (ek.length ? ' ' + ek.join(' ') : '') + ` Birim fiyat ${bf} ₺ · asgari kupon ${money(ASGARI)}.`;
 }
 function renderKuralBilgi(T, c, r){

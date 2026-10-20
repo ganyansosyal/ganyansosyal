@@ -35,7 +35,7 @@ const TYPES = [
   {k:'si',  name:'Sıralı İkili', mode:'race', rule:'slots', slots:2, sub:'sıralı ilk 2', desc:'İlk iki atı sırasıyla bul', hint:'Üstteki sekmeden sırayı seç (1. At / 2. At), her sıra için at işaretle.'},
   {k:'siv', name:'Sıralı İkili (Virgüllü)', mode:'race', rule:'slots', slots:2, one:true, vir:true, sub:'sıralı ilk 2', desc:'En az 2 at seç, sıran önemli (virgüllü)', hint:'Atlara sırayla dokun (en az 2, istediğin kadar). Dokunma sırası = sıralaman; tutmak için ilk 2 at listede bu sırayla yer almalı.'},
   {k:'ik',  name:'İkili Bahis',  mode:'race', rule:'any2', tabs:2, sub:'ilk 2', desc:'İlk iki atı sırasız bul', hint:'1. At ve 2. At sekmelerinden birer veya daha fazla at seç. Her çift, farklı sekmelerden bir attır.'},
-  {k:'ik1', name:'İkili Bahis (Tek kolon)', mode:'race', rule:'any2', exact:2, sub:'tek kolon', desc:'İlk iki at, tek kolon', hint:'Tam 2 at seç.'},
+  {k:'ik1', name:'İkili Bahis (Tek kolon)', mode:'race', rule:'any2', sub:'tek kolon', desc:'İlk iki at, tek kolon', hint:'En az 2 at seç. Seçtiğin atlardan olası tüm ikili çiftler oynanır (3 at = 3 kolon, 4 at = 6 kolon).'},
   {k:'c2',  name:'Çifte Bahis',  mode:'legs', n:2, rule:'win', sub:'2 ayak', si:0},
   {k:'c2b', name:'Çifte Bahis',  mode:'legs', n:2, rule:'win', sub:'2 ayak', si:1},   // 2. çifte: sadece bülten ikinci başlangıcı bildiriyorsa görünür
   {k:'pi',  name:'Plase İkili',  mode:'race', rule:'pl2', tabs:2, sub:'plase 2 at', desc:"Plase'ye girecek iki atı bul", hint:"1. At ve 2. At sekmelerinden at seç. Her çift, farklı sekmelerden bir attır."},
