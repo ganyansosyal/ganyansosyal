@@ -472,6 +472,17 @@ function myStats(){
   return {count: cur.c, rate: '%' + (cur.s > 0 ? Math.round(cur.w / cur.s * 100) : 0)};
 }
 
+// Moderatör / yönetici için profilde küçük yasaklama butonu (sağ alt köşe). Yönetici profiline ve kendine gösterilmez.
+function profBanBtn(k){
+  try{
+    if(k === ME || typeof canBan !== 'function' || !canBan()) return '';
+    const uid = USERS[k] && USERS[k].uid;
+    if(!uid || uid === FB.uid || isAdminUid(uid)) return '';
+    const banned = banActive(FB.bans && FB.bans[uid]);
+    return `<button type="button" class="pban ${banned ? 'on' : ''}" aria-label="${banned ? 'Yasağı kaldır' : 'Yasakla'}" title="${banned ? 'Yasağı kaldır' : 'Yasakla'}" onclick="${banned ? 'admUnban' : 'admBan'}('${esc(uid)}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></button>`;
+  }catch(e){ return ''; }
+}
+
 function renderProfile(){
   try{ setTimeout(resolveDayResults, 200); }catch(e){}
   const u = USERS[viewing];
@@ -509,6 +520,7 @@ function renderProfile(){
         ${av(viewing,'xl')}
         <div class="pid"><div class="pid-top"><h2${(!me && admView() && admCanManage(viewing)) ? ` onclick="admUserMenu('${esc(viewing)}')" style="cursor:pointer"` : ''}>${esc(dn(viewing))}</h2></div><span class="uh"><i>@</i>${esc((u.h||'').replace(/^@/,''))}</span></div>
       </div>
+      ${profBanBtn(viewing)}
     </div>
     <div class="plist" id="plist">
     <div class="pn pn-row">
