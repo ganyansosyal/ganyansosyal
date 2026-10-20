@@ -573,6 +573,7 @@ function renderFeedNow(){
   if(filter === 'winners') l = base.filter(isWon);
   if(filter === 'tracked') l = base.filter(p => p.coupon && p.author !== ME && tracked[tk(p)]);
   if(filter === 'follow') l = base.filter(p => following[p.author]);
+  if(filter !== 'tracked') l = l.filter(p => !isLost(p));   // Kaybeden kuponlar akıştan kalkar (profilde görünmeye devam eder); Kupon Takip'te kalır
   // Sıralama: en iyiden en kötüye. Tuttu > devam ediyor (çok ayak tutan önce) > bekliyor > kaybetti > kuponsuz yazılar.
   // Eşitlikte: kupon puanı, sonra beğeni + yorum, sonra yeni olan önce.
   const eng = p => (p.likes || 0) + (p.comments ? p.comments.length : 0);
