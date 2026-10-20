@@ -79,7 +79,7 @@ function kolon(c){
   if((rule === 'any2' || rule === 'pl2') && c.legs[0].sets) return setPairs(c.legs[0].sets).length;
   if(rule === 'any2' || rule === 'pl2'){ const m = ps[0].length; return m * (m - 1) / 2; }
   if(rule === 'any4'){ const m = ps[0].length; return m < 4 ? 0 : m * (m - 1) * (m - 2) * (m - 3) / 24; }
-  if(rule === 'gp') return ps[0].length * 2;
+  if(rule === 'gp') return ps[0].length;   // her at 1 kolon; Ganyan + Plase iki bahis olduğu için birim fiyat 2 TL (birimFiyat)
   return ps.reduce((a, p) => a * p.length, 1);
 }
 
