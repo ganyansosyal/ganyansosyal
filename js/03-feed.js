@@ -543,6 +543,29 @@ function feedDayListen(){
   FB.dayUn.push(FB.db.collection('posts').where('ts', '>=', a).where('ts', '<', b).limit(200).onSnapshot(sn => { FB.dayB = grab(sn); mix(); }, e => showToast(fbErr(e))));
 }
 // Peş peşe gelen yenilemeleri (ör. iki snapshot arka arkaya) tek çizimde topla; ilk çağrı hemen çalışır
+
+// ── Modern filtre kartları (3 sütun x 2 satır, eşit boy) ──
+function injectFilterStyle(){
+  if(document.getElementById('filters-style')) return;
+  const st = document.createElement('style');
+  st.id = 'filters-style';
+  st.textContent = `
+#filters{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:10px!important;overflow:visible!important;flex-wrap:wrap!important;padding:4px 2px 8px!important;margin:6px 0 10px!important}
+#filters .chip{--ac:#10b981;--ac2:#059669;position:relative;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:7px!important;width:100%!important;min-width:0!important;height:auto!important;padding:12px 4px 11px!important;border:1.5px solid rgba(127,127,127,.16)!important;border-radius:18px!important;background:rgba(127,127,127,.07)!important;color:inherit!important;font-size:13.5px!important;font-weight:700!important;line-height:1.15!important;text-align:center!important;white-space:normal!important;box-shadow:0 2px 8px rgba(0,0,0,.05)!important;transition:transform .15s ease,box-shadow .2s ease,background .2s ease!important;-webkit-tap-highlight-color:transparent}
+#filters .chip svg{width:40px!important;height:40px!important;padding:9px!important;box-sizing:border-box!important;border-radius:14px!important;fill:none!important;stroke:var(--ac)!important;stroke-width:2!important;stroke-linecap:round!important;stroke-linejoin:round!important;background:color-mix(in srgb,var(--ac) 14%,transparent)!important;flex:none!important;transition:all .2s ease}
+#filters .chip span{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#filters .chip:active{transform:scale(.95)!important}
+#filters .chip.on{background:linear-gradient(145deg,var(--ac),var(--ac2))!important;border-color:transparent!important;color:#fff!important;box-shadow:0 8px 20px color-mix(in srgb,var(--ac) 45%,transparent)!important;transform:translateY(-2px)}
+#filters .chip.on svg{stroke:#fff!important;background:rgba(255,255,255,.22)!important}
+#filters .f-all{--ac:#10b981;--ac2:#047857}
+#filters .f-mine{--ac:#6366f1;--ac2:#4338ca}
+#filters .f-lost{--ac:#ef4444;--ac2:#b91c1c}
+#filters .f-follow{--ac:#ec4899;--ac2:#be185d}
+#filters .f-winners{--ac:#f59e0b;--ac2:#d97706}
+#filters .f-tracked{--ac:#0ea5e9;--ac2:#0369a1}
+`;
+  document.head.appendChild(st);
+}
 var _rfT = 0, _rfP = 0;
 function renderFeed(){
   const wait = 60 - (performance.now() - _rfT);
@@ -551,6 +574,7 @@ function renderFeed(){
 }
 function renderFeedNow(){
   _rfT = performance.now();
+  injectFilterStyle();
   renderMeCard();
   paintFeedDate();
   $('cmp-av').innerHTML = av(ME);
