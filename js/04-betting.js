@@ -42,10 +42,48 @@ function bkShare(noHorse){
   showToast('Banko akışta paylaşıldı!');
 }
 
+
+// ---- TJK'daki gibi "bu koşudan başlar" satırı + oyun kuralları ----
+const BASLAR_AD = {PLASE:{7:"7'Lİ PLASE"}, GANYAN:{3:"3'LÜ GANYAN",4:"4'LÜ GANYAN",5:"5'Lİ GANYAN",6:"6'LI GANYAN",7:"7'Lİ GANYAN"}, CIFTE:{2:'ÇİFTE'}};
+function baslarYazi(c, r){
+  const ki = raceInfo(c, r); if(!ki || !(ki.baslar || []).length) return '';
+  const out = ki.baslar.map(x => {
+    const ad = (BASLAR_AD[x.tur] || {})[x.n]; if(!ad) return '';
+    const st = raceList(c).filter(k => (k.baslar || []).some(y => y.tur === x.tur && y.n === x.n)).map(k => +k.no);
+    return (st.length > 1 ? (st.indexOf(r) + 1) + '. ' : '') + ad;
+  }).filter(Boolean);
+  return out.length ? out.join(', ') + ' bu koşudan başlar' : '';
+}
+function kuralMetni(T){
+  const bf = fiyatYazi(birimFiyat(T.name, city)), ek = [];
+  let m;
+  if(T.mode === 'legs') m = T.rule === 'place' ? `Ardışık ${T.n} ayakta, her koşuda plase'ye girecek bir at seç. Hepsi tutarsa kazanırsın.` : `Ardışık ${T.n} ayakta, her koşunun kazananını bul. Hepsi tutarsa kazanırsın. Bir ayakta birden fazla at seçebilirsin.`;
+  else if(T.rule === 'win') m = 'Seçtiğin at birinci gelirse kazanırsın.';
+  else if(T.rule === 'place') m = "Seçtiğin at plase'ye girerse kazanırsın (7 ata kadar ilk 2, 8 ve üstü ilk 3).";
+  else if(T.rule === 'gp') m = "Seçtiğin at hem ganyan hem plase oynar. Birinci gelirse ikisi de, sadece plase'ye girerse plase tutar.";
+  else if(T.rule === 'any2') m = 'İlk iki atı sırasız bil. Hangisinin birinci, hangisinin ikinci geldiği önemli değil.';
+  else if(T.rule === 'pl2') m = "Plase'ye giren iki atı sırasız bil.";
+  else if(T.rule === 'any4') m = 'İlk dört atı bil (tabela). Sırası önemli değil.';
+  else if(T.rule === 'slots') m = `İlk ${T.slots} atı geliş sırasıyla bil.`;
+  else m = T.desc || '';
+  if(/Virgüllü/.test(T.name)) ek.push('Her sıra için birden fazla at seçebilirsin; kolon sayısı arttıkça tutar artar.');
+  if(/Tek kolon/.test(T.name)) ek.push('Tek kolondur: tam olarak ' + (T.exact || 2) + ' at seçilir.');
+  return m + (ek.length ? ' ' + ek.join(' ') : '') + ` Birim fiyat ${bf} ₺ · asgari kupon ${money(ASGARI)}.`;
+}
+function renderKuralBilgi(T, c, r){
+  const mt = $('race-meta'); if(!mt || !mt.parentNode) return;
+  let box = $('race-kural');
+  if(!box){ box = document.createElement('div'); box.id = 'race-kural'; box.style.cssText = 'margin:6px 0;font-size:13px;line-height:1.4'; mt.parentNode.insertBefore(box, mt.nextSibling); }
+  const bs = baslarYazi(c, r);
+  const html = (bs ? '<div style="font-weight:600;margin-bottom:4px">' + esc(bs) + '</div>' : '')
+    + '<details><summary style="cursor:pointer;font-weight:600">ⓘ ' + esc(tLabel(T, c)) + ' nasıl oynanır?</summary><div style="margin-top:4px;opacity:.85">' + esc(kuralMetni(T)) + '</div></details>';
+  if(box._h !== html){ box._h = html; box.innerHTML = html; }
+}
+
 // ---- BÜLTEN: bahis türü -> seçim ----
 // Çok ayaklı bahisler günün SON N koşusudur (örn. 6'lı = 4-9. koşu). Diğer türlerde tek koşu seçilir.
 // TJK'nın bildirdiği ayak başlangıçları (varsa). Tür → {tur, n}
-const LEG_MAP = {p7:{tur:'PLASE', n:7}, g7:{tur:'GANYAN', n:7}, g6:{tur:'GANYAN', n:6}, g6b:{tur:'GANYAN', n:6}, g5:{tur:'GANYAN', n:5}, g5b:{tur:'GANYAN', n:5}, g4:{tur:'GANYAN', n:4}, g3:{tur:'GANYAN', n:3}, c2:{tur:'CIFTE', n:2}};
+const LEG_MAP = {p7:{tur:'PLASE', n:7}, g7:{tur:'GANYAN', n:7}, g6:{tur:'GANYAN', n:6}, g6b:{tur:'GANYAN', n:6}, g5:{tur:'GANYAN', n:5}, g5b:{tur:'GANYAN', n:5}, g4:{tur:'GANYAN', n:4}, g4b:{tur:'GANYAN', n:4}, g3:{tur:'GANYAN', n:3}, g3b:{tur:'GANYAN', n:3}, c2:{tur:'CIFTE', n:2}, c2b:{tur:'CIFTE', n:2}};
 // Görünen ad: bülten iki altılı bildiriyorsa "1. 6'lı Ganyan" / "2. 6'lı Ganyan"
 // Aynı bahisten TJK'da birden fazla başlangıç varsa (1. / 2. 3'lü Ganyan gibi) seçili grubun sırası başa yazılır
 const tLabel = (t, c = city) => {
@@ -600,6 +638,7 @@ function _renderBulten(){
   $('race-title').textContent = `${city} ${race}. Koşu` + (ri && ri.saat ? ' • ' + ri.saat : '');
   $('race-meta').innerHTML = ri ? (ri.bilgi ? `<span class="rbi">${esc(ri.bilgi)}</span><span class="rbn">${ri.atlar.length} at</span>` : esc([ri.mesafe, ri.pist, ri.atlar.length + ' at'].filter(Boolean).join(' • '))) : '';
 
+  renderKuralBilgi(T, city, race);
   const mine = selList().filter(x => x.c === city && x.r === race);
   const fin = raceDone(city, race), rres = raceRes(city, race) || [];
   setHtml($('res-panel'), resPanelHtml(city, race));

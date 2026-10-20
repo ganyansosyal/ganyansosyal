@@ -25,8 +25,10 @@ const TYPES = [
   {k:'g6b', name:"6'lı Ganyan",  mode:'legs', n:6, rule:'win',   sub:'6 ayak', si:1},   // 2. altılı: sadece bülten ikinci başlangıcı bildiriyorsa görünür
   {k:'g5',  name:"5'li Ganyan",  mode:'legs', n:5, rule:'win',   sub:'5 ayak', si:0},
   {k:'g5b', name:"5'li Ganyan",  mode:'legs', n:5, rule:'win',   sub:'5 ayak', si:1},   // 2. 5'li: sadece bülten ikinci başlangıcı bildiriyorsa görünür
-  {k:'g4',  name:"4'lü Ganyan",  mode:'legs', n:4, rule:'win',   sub:'4 ayak'},
-  {k:'g3',  name:"3'lü Ganyan",  mode:'legs', n:3, rule:'win',   sub:'3 ayak'},
+  {k:'g4',  name:"4'lü Ganyan",  mode:'legs', n:4, rule:'win',   sub:'4 ayak', si:0},
+  {k:'g4b', name:"4'lü Ganyan",  mode:'legs', n:4, rule:'win',   sub:'4 ayak', si:1},   // 2. 4'lü: sadece bülten ikinci başlangıcı bildiriyorsa görünür
+  {k:'g3',  name:"3'lü Ganyan",  mode:'legs', n:3, rule:'win',   sub:'3 ayak', si:0},
+  {k:'g3b', name:"3'lü Ganyan",  mode:'legs', n:3, rule:'win',   sub:'3 ayak', si:1},   // 2. 3'lü: sadece bülten ikinci başlangıcı bildiriyorsa görünür
   {k:'g1',  name:'Ganyan',       mode:'race', rule:'win',   sub:'1. gelen',  desc:'Tek koşuda kazananı bul'},
   {k:'pl',  name:'Plase',        mode:'race', rule:'place', sub:'plase',     desc:"Seçtiğin at plase'ye girer mi?", hint:'Bir veya daha fazla at seç. Plase: 7 ata kadar ilk 2, 8 ve üstü ilk 3.'},
   {k:'gp',  name:'Ganyan & Plase', mode:'race', rule:'gp', sub:'1. + plase', desc:'Hem ganyan hem plase oyna', hint:'Seçtiğin her at hem ganyan hem plase oynar.'},
@@ -34,7 +36,8 @@ const TYPES = [
   {k:'siv', name:'Sıralı İkili (Virgüllü)', mode:'race', rule:'slots', slots:2, sub:'sıralı ilk 2', desc:'İlk iki atı sırasıyla bul, çoklu seçim', hint:'Üstteki sekmeden sırayı seç (1. At / 2. At), her sıra için at işaretle.'},
   {k:'ik',  name:'İkili Bahis',  mode:'race', rule:'any2', tabs:2, sub:'ilk 2', desc:'İlk iki atı sırasız bul', hint:'1. At ve 2. At sekmelerinden birer veya daha fazla at seç. Her çift, farklı sekmelerden bir attır.'},
   {k:'ik1', name:'İkili Bahis (Tek kolon)', mode:'race', rule:'any2', exact:2, sub:'tek kolon', desc:'İlk iki at, tek kolon', hint:'Tam 2 at seç.'},
-  {k:'c2',  name:'Çifte Bahis',  mode:'legs', n:2, rule:'win', sub:'2 ayak'},
+  {k:'c2',  name:'Çifte Bahis',  mode:'legs', n:2, rule:'win', sub:'2 ayak', si:0},
+  {k:'c2b', name:'Çifte Bahis',  mode:'legs', n:2, rule:'win', sub:'2 ayak', si:1},   // 2. çifte: sadece bülten ikinci başlangıcı bildiriyorsa görünür
   {k:'pi',  name:'Plase İkili',  mode:'race', rule:'pl2', tabs:2, sub:'plase 2 at', desc:"Plase'ye girecek iki atı bul", hint:"1. At ve 2. At sekmelerinden at seç. Her çift, farklı sekmelerden bir attır."},
   {k:'pi1', name:'Plase İkili (Tek kolon)', mode:'race', rule:'pl2', exact:2, sub:'tek kolon', desc:'Plase ikili, tek kolon', hint:'Tam 2 at seç.'},
   {k:'su',  name:'Sıralı Üçlü',  mode:'race', rule:'slots', slots:3, one:true, sub:'sıralı ilk 3', desc:'İlk üç atı sırasıyla bul', hint:'Atlara sırayla dokun: 1., 2. ve 3. gelecek at.'},

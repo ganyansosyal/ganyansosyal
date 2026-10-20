@@ -105,7 +105,7 @@ const av = (n, z='m') => { const f = frameOf(n), h = rawAv(n, z); return f ? `<s
 
 // Orijinal Veri Listeleri
 const KOLON = 1.25; // 1 kolon fiyatı (TL) — varsayılan
-// Birim fiyatlar (TJK, 5 Ocak 2026'dan beri): Ganyan/Plase/İkili/Sıralı İkili/Çifte 1 TL; Plase İkili 2 TL; Sıralı Üçlü 2 TL; Tabela 1,50 TL; Sıralı Beşli 1,25 TL;
+// Birim fiyatlar (TJK, 5 Ocak 2026'dan beri): Ganyan/Plase/İkili/Sıralı İkili/Çifte 1 TL; Plase İkili 2 TL; Ganyan & Plase 2 TL; Sıralı Üçlü 2 TL; Tabela 1,50 TL; Sıralı Beşli 1,25 TL;
 // 3'lü 2 TL, 4'lü 1,75 TL, 5'li 1,50 TL, 7'li Plase 2 TL; 6'lı: İstanbul/Ankara/İzmir/Adana/Bursa/Kocaeli/Antalya 1,25 TL, Diyarbakır/Elazığ/Şanlıurfa 1 TL
 const birimFiyat = (tur, sehir) => {
   const n = String(tur || '');
@@ -115,6 +115,7 @@ const birimFiyat = (tur, sehir) => {
   if(/^3'lü Ganyan/.test(n)) return 2;
   if(/^7'li (Plase|Ganyan)/.test(n)) return 2;
   if(/^Plase İkili/.test(n)) return 2;
+  if(/^Ganyan & Plase/.test(n)) return 2;
   if(/^Sıralı Üçlü/.test(n)) return 2;
   if(/^Tabela/.test(n)) return 1.5;
   if(/^Sıralı Beşli/.test(n)) return 1.25;
