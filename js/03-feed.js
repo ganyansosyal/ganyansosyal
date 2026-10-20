@@ -352,7 +352,7 @@ function postHtml(p){
      <div class="ph-act">
        ${followBtn(p.author)}
        ${admDelBtn(p)}
-       ${p.author === ME && canDelete(p).ok ? `<button class="px" onclick="askDeletePost(${p.id})" aria-label="Paylaşımı sil">${ic('x',16)}</button>` : ''}
+       ${p.author === ME && !isAdminKey(ME) && canDelete(p).ok ? `<button class="px" onclick="askDeletePost(${p.id})" aria-label="Kuponu sil" title="Kuponu sil" style="background:#e53935;color:#fff;border-radius:12px;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(229,57,53,.35)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg></button>` : ''}
      </div>
    </div>
    <div class="txt">${esc(p.text)}</div>
@@ -828,20 +828,20 @@ function canDelete(p){
   if(!p || p.author !== ME) return {ok: false, phase: 'x'};
   const c = p.coupon;
   if(!c) return {ok: true, phase: 'free'};
-  return {ok: false, phase: 'locked'};   // Paylaşılan kuponlar kullanıcı tarafından silinemez (tutmayanlar gün sonunda otomatik silinir)
-  const now = Date.now(), starts = c.legs.map(l => legStartMs(c, l)).filter(x => x != null);
-  if(!starts.length || starts.every(t => t > now)) return {ok: true, phase: 'free'};   // henüz hiçbir koşu başlamadı
-  const infos = c.legs.map(l => legInfo(c, l).st);
-  if(infos.every(x => x !== 'p')) return {ok: true, phase: 'settled', pts: Math.max(0, scoreOf(ME).pts - scoreOf(ME, p).pts)};   // tavan uygulanmış gerçek katkı kadar düşer
-  // TJK sonucu hiç yayınlamadıysa (ya da çok eskiyse) kupon sonsuza dek kilitli kalmasın; hiç puan sayılmadığı için ceza da yok
-  if(now - Math.max(...starts) > 12 * 3600000 && !infos.includes('h') && !infos.includes('m')) return {ok: true, phase: 'free'};
-  return {ok: false, phase: 'locked'};
+  // Kullanıcı kendi kuponunu istediği zaman silebilir. Sonuçlanmış ve puan getirmişse silinince puan düşer (onay diyaloğu uyarır).
+  let infos = [];
+  try{ infos = c.legs.map(l => legInfo(c, l).st); }catch(e){}
+  if(infos.length && infos.every(x => x !== 'p')){
+    let pts = 0; try{ pts = Math.max(0, scoreOf(ME).pts - scoreOf(ME, p).pts); }catch(e){}   // tavan uygulanmış gerçek katkı kadar düşer
+    return {ok: true, phase: 'settled', pts};
+  }
+  return {ok: true, phase: 'free'};
 }
 function askDeletePost(id){
   const p = posts.find(x => x.id === id);
   if(!p || p.author !== ME) return;
   const cd = canDelete(p);
-  if(!cd.ok){ showToast('Paylaşılan kuponlar silinemez.'); rerender(); return; }
+  if(!cd.ok){ showToast('Bu paylaşım silinemedi.'); rerender(); return; }
   const warn = cd.phase === 'settled' && cd.pts > 0;
   const title = warn ? 'Puanların silinecek' : 'Paylaşımı sil';
   const text = warn
@@ -855,7 +855,7 @@ function askDeletePost(id){
   d.querySelector('.no').onclick = close;
   d.querySelector('.del').onclick = () => {
     close();
-    if(!canDelete(p).ok){ showToast('Koşular başladı, sonuç gelmeden kupon silinemez.'); rerender(); return; }   // diyalog açıkken durum değişmiş olabilir
+    if(!canDelete(p).ok){ showToast('Bu paylaşım silinemedi.'); rerender(); return; }
     if(FB_ON) fbDeletePost(p);
     posts = posts.filter(x => x.id !== id);
     rerender();
