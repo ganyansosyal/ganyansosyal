@@ -66,6 +66,7 @@ p{color:var(--muted);font-size:16px;line-height:1.55;max-width:34ch}
   background:var(--ink);color:var(--card);
   padding:12px 18px;border-radius:16px;
 }
+a.play{text-decoration:none;cursor:pointer}
 .play svg{width:26px;height:26px;flex:none}
 .play small{display:block;font-size:12px;opacity:.7;font-weight:500}
 .play strong{font-size:18px;font-weight:800;letter-spacing:-.01em}
@@ -91,10 +92,10 @@ p{color:var(--muted);font-size:16px;line-height:1.55;max-width:34ch}
   </div>
   <div class="perf" aria-hidden="true"></div>
   <div class="stub">
-    <div class="play" aria-label="Google Play’de yakında">
+    <a class="play" href="https://play.google.com/store/apps/details?id=io.github.ganyansosyal.app" target="_blank" rel="noopener" aria-label="Google Play’de aç">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3.2v17.6c0 .6.7 1 1.2.7l14-8.8c.5-.3.5-1.1 0-1.4l-14-8.8C5.7 2.2 5 2.600 5 3.200z" fill="#35e3a8"/></svg>
       <div><small>Yayına hazırlanıyor</small><strong>Google Play</strong></div>
-    </div>
+    </a>
     <div class="soon"><span class="dot"></span>Çok yakında</div>
   </div>
 </main>
